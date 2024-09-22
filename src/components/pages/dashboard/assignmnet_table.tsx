@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@radix-ui/react-checkbox";
 import { ArrowUpRight, Link, Table } from "lucide-react";
-import { AssignmentChartData } from "../dashboard";
+import { AssignmentTableData } from "../dashboard";
 import React from "react";
 
 // Fix: Correctly define props in function signature
 interface AssignmentProps {
-  assignments: AssignmentChartData[];
+  assignments: AssignmentTableData[];
 }
 
 // Fix: Correct arrow function syntax

@@ -1,14 +1,9 @@
 import Link from "next/link";
 import {
-  Activity,
-  ArrowUpRight,
   CircleUser,
-  CreditCard,
-  DollarSign,
   Menu,
   Package2,
   Search,
-  Users,
 } from "lucide-react";
 
 
