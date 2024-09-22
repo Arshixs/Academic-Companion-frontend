@@ -83,8 +83,8 @@ export function NavigationMenuDemo() {
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         ></Link>
         <Link
-          href="#"
           className="text-foreground transition-colors hover:text-foreground"
+          href="/"
         >
           Dashboard
         </Link>

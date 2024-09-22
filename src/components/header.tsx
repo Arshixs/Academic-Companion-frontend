@@ -33,19 +33,19 @@ export const Header = () => {
           <span className="sr-only">Acme Inc</span>
         </Link>
         <Link
-          href="#"
+          href="/"
           className="text-foreground transition-colors hover:text-foreground"
         >
           Dashboard
         </Link>
         <Link
-          href="#"
+          href="/"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           Attendance
         </Link>
         <Link
-          href="#"
+          href="/assignment"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           Assignment
