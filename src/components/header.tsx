@@ -51,7 +51,7 @@ export const Header = () => {
           Assignment
         </Link>
         <Link
-          href="#"
+          href="/notes"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           Notes
