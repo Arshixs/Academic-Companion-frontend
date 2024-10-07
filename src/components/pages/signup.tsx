@@ -64,6 +64,9 @@ export function SignUpForm() {
 
       const result = await response.json();
       console.log("User created successfully:", result);
+
+      // Redirect to login page after successful signup using window.location
+      window.location.href = "/login"; // Change "/login" to your actual login page path if different
     } catch (error) {
       console.error("Error:", error);
     }
@@ -169,16 +172,14 @@ export function SignUpForm() {
             </div>
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
-              <Link href="#" className="underline">
+              <Link href="/login" className="underline">
                 Sign in
               </Link>
             </div>
           </form>
         </CardContent>
       </Card>
-      <div className="h-40">
-
-      </div>
+      <div className="h-40"></div>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { ThemeProvider } from "@/components/theme-provider";
-import { Dashboard } from "./components/pages/dashboard";
+import {Dashboard} from "./components/pages/dashboard"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AssignmentPage from "./components/pages/assignment";
 import AttendancePage from "./components/pages/attendance";
