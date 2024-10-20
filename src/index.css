@@ -1,3 +1,9 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+
+* {
+  font-family: "Roboto", sans-serif;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -67,24 +73,21 @@
   }
 }
 
-
 @layer utilities {
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 12px;  /* Adjust the width of the scrollbar */
-    }
-  
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #040711;  /* Track color */
-    }
-  
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: #9b5de5;  /* Purple color for the scrollbar thumb */
-      border-radius: 6px;  /* Rounded edges */
-
-    }
-  
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background-color: #a661ff;  /* Darker purple on hover */
-    }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 12px; /* Adjust the width of the scrollbar */
   }
-  
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #040711; /* Track color */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #9b5de5; /* Purple color for the scrollbar thumb */
+    border-radius: 6px; /* Rounded edges */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #a661ff; /* Darker purple on hover */
+  }
+}
