@@ -117,25 +117,46 @@ export const description =
 export function Dashboard() {
   const [attendanceData, setAttendanceData] = useState<DashChartData[]>([]);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const AuthTokens = JSON.parse(localStorage.getItem("authTokens") || "{}");
+  const accessToken = AuthTokens["access"];
 
   useEffect(() => {
-    if (user && user.id) {
-      const userId = user.id;
-
-      // Fetch attendance data when the component mounts
-      fetch(`http://127.0.0.1:8000/attendance/${userId}/`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Attendance Data:", data);
-          setAttendanceData(data); // Update the state with the fetched data
-        })
-        .catch((error) => console.error("Error fetching attendance:", error));
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    if (accessToken) {
+      myHeaders.append("Authorization", `Bearer ${accessToken}`);
     }
+
+    const requestOptions = {
+      method: "GET",
+      headers: myHeaders,
+    };
+
+    fetch("http://127.0.0.1:8000/attendance/data/", requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Attendance Data:", data);
+        setAttendanceData(data); // Update the state with the fetched data
+      })
+      .catch((error) => console.error("Error fetching attendance:", error));
+
+    // if (user && user.id) {
+    //   const userId = user.id;
+
+    //   // Fetch attendance data when the component mounts
+    //   fetch(`http://127.0.0.1:8000/attendance/data/`, {
+    //     method: "GET",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //   })
+    //     .then((response) => response.json())
+    //   .then((data) => {
+    //     console.log("Attendance Data:", data);
+    //     setAttendanceData(data); // Update the state with the fetched data
+    //   });
+    //     .catch((error) => console.error("Error fetching attendance:", error));
+    // }
   }, []); // Re-run this effect if `user` changes
   return (
     <div className="flex min-h-screen w-full flex-col">

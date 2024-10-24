@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import Link from "next/link";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,13 +11,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "../header";
-import { useNavigate } from "react-router-dom";
+import AuthContext from "../../../context/AuthContext"; // Update the import path as needed
 
 export const description =
   "A login form with email and password. There's an option to login with Google and a link to sign up if you don't have an account.";
 
 export function LoginForm() {
-  const navigate = useNavigate();
+  const authContext = useContext(AuthContext); // Get the whole context
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -37,27 +37,11 @@ export function LoginForm() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/users/login/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Include cookies for session management
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Invalid login credentials");
+      if (authContext?.loginUser) {
+        await authContext.loginUser(formData.username, formData.password); // Pass username and password
+      } else {
+        setError("Authentication is not available.");
       }
-
-      const data = await response.json();
-      
-      console.log(data)
-      // Store user data in local storage
-      localStorage.setItem("user", JSON.stringify(data.user_data));
-
-      // Redirect to dashboard on successful login
-      navigate("/dashboard");
     } catch (error) {
       setError(`Invalid username or password. Please try again. ${error}`);
     }

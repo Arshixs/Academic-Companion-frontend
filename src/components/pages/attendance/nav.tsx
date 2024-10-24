@@ -13,6 +13,7 @@ import {
 
 interface NavProps {
   isCollapsed: boolean
+  setSelected: React.Dispatch<React.SetStateAction<string | undefined>> // Updated to React.Dispatch
   links: {
     title: string
     label?: string
@@ -21,11 +22,17 @@ interface NavProps {
   }[]
 }
 
-export function Nav({ links, isCollapsed }: NavProps) {
+export function Nav({ links, isCollapsed, setSelected }: NavProps) {
+  
+  // Function to handle clicking on a link
+  const handleClick = (title: string) => {
+    setSelected(title); // Set the selected title
+  };
+
   return (
     <div
       data-collapsed={isCollapsed}
-      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2"
+      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2 border-0"
     >
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
         {links.map((link, index) =>
@@ -34,6 +41,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
               <TooltipTrigger asChild>
                 <Link
                   href="#"
+                  onClick={() => handleClick(link.title)} // Handle click event
                   className={cn(
                     buttonVariants({ variant: link.variant, size: "icon" }),
                     "h-9 w-9",
@@ -58,6 +66,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
             <Link
               key={index}
               href="#"
+              onClick={() => handleClick(link.title)} // Handle click event
               className={cn(
                 buttonVariants({ variant: link.variant, size: "sm" }),
                 link.variant === "default" &&

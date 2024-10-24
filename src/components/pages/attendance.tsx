@@ -1,130 +1,93 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Header } from "../header";
 import { ResizablePanel, ResizablePanelGroup } from "../ui/resizable";
 import { Separator } from "../ui/separator";
 import { Nav } from "./attendance/nav";
-import {
-  AlertCircle,
-  Archive,
-  ArchiveX,
-  File,
-  Inbox,
-  MessagesSquare,
-  Send,
-  ShoppingCart,
-  Trash2,
-  Users2,
-} from "lucide-react";
+import { Archive, ArchiveX, File, Inbox, Send, Trash2 } from "lucide-react";
+import {Calendar} from "./attendance/calender";
 
-// Define your default state variables
-const defaultCollapsed = false; // Change as per your requirement
-const defaultLayout = [200]; // Define your layout size
-const navCollapsedSize = 50; // Define your collapsed size
+// Define TypeScript interfaces for attendance data
+interface AttendanceRecord {
+  [date: string]: string;
+}
+
+interface AttendanceData {
+  [courseId: string]: AttendanceRecord;
+}
+
+const defaultCollapsed = false;
+const defaultLayout = [200];
+const navCollapsedSize = 50;
 
 const AttendancePage = () => {
+  const [attendanceData, setAttendanceData] = useState<AttendanceData>({});
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  useEffect(() => {
+    if (user && user.id) {
+      const userId = user.id;
+
+      // Fetch attendance data when the component mounts
+      fetch(`http://127.0.0.1:8000/attendance/detailed/${userId}/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data: AttendanceData) => {
+          console.log("Attendance Data:", data);
+          setAttendanceData(data);
+        })
+        .catch((error) => console.error("Error fetching attendance:", error));
+    }
+  }, []);
+  const [selected, setSelected] = useState<string>();
+
+  useEffect(() => {
+    console.log(selected);
+  }, [selected]);
+
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
 
-  return (<>
+  // Map attendance data to Nav links
+  const mapAttendanceToLinks = () => {
+    const icons = [Inbox, File, Send, ArchiveX, Trash2, Archive];
+    return Object.keys(attendanceData).map((course, index) => {
+      const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+      const dates = Object.keys(attendanceData[course]);
+      const latestDate = dates[dates.length - 1];
+      const latestStatus = attendanceData[course][latestDate];
+
+      return {
+        title: course, // Course ID as title
+        label: "",
+        icon: randomIcon,
+        variant: "ghost",
+      };
+    });
+  };
+
+  return (
+    <>
       <Header />
-      <main className="grid-cols-2 h-full gap-4 md:gap-8">
-        <ResizablePanelGroup
-          direction="horizontal"
-          onLayout={(sizes: number[]) => {
-            document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(
-              sizes
-            )}`;
-          }}
-          className="h-full w-10"
-        >
-          <div className="border-r ">
-            <ResizablePanel
-              defaultSize={defaultLayout[0]}
-              collapsedSize={navCollapsedSize}
-              collapsible={true}
-              minSize={15}
-              maxSize={20}
-              onCollapse={() => {
-                setIsCollapsed(true);
-                document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-                  true
-                )}`;
-              }}
-              onResize={() => {
-                setIsCollapsed(false);
-                document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-                  false
-                )}`;
-              }}
-              className="w-64"
-            >
-              <Separator />
-              <Nav
-                isCollapsed={isCollapsed}
-                links={[
-                  {
-                    title: "Inbox",
-                    label: "128",
-                    icon: Inbox,
-                    variant: "default",
-                  },
-                  { title: "Drafts", label: "9", icon: File, variant: "ghost" },
-                  { title: "Sent", label: "", icon: Send, variant: "ghost" },
-                  {
-                    title: "Junk",
-                    label: "23",
-                    icon: ArchiveX,
-                    variant: "ghost",
-                  },
-                  { title: "Trash", label: "", icon: Trash2, variant: "ghost" },
-                  {
-                    title: "Archive",
-                    label: "",
-                    icon: Archive,
-                    variant: "ghost",
-                  },
-                ]}
-              />
-              <Separator />
-              <Nav
-                isCollapsed={isCollapsed}
-                links={[
-                  {
-                    title: "Social",
-                    label: "972",
-                    icon: Users2,
-                    variant: "ghost",
-                  },
-                  {
-                    title: "Updates",
-                    label: "342",
-                    icon: AlertCircle,
-                    variant: "ghost",
-                  },
-                  {
-                    title: "Forums",
-                    label: "128",
-                    icon: MessagesSquare,
-                    variant: "ghost",
-                  },
-                  {
-                    title: "Shopping",
-                    label: "8",
-                    icon: ShoppingCart,
-                    variant: "ghost",
-                  },
-                  {
-                    title: "Promotions",
-                    label: "21",
-                    icon: Archive,
-                    variant: "ghost",
-                  },
-                ]}
-              />
-            </ResizablePanel>
+      <main className="h-screen gap-4 md:gap-8">
+        <div className="flex flex-row h-full">
+          <div className="text-center flex-none w-40 border bg-card text-card-foreground shadow-sm">
+            <Nav
+              className="text-center"
+              setSelected={setSelected}
+              isCollapsed={isCollapsed}
+              links={mapAttendanceToLinks()}
+            />
           </div>
-        </ResizablePanelGroup>
+          <div className="flex-auto">
+            <Calendar />
+          </div>
+          <div className="flex-auto w-64">02</div>
+        </div>
       </main>
-  </>
+    </>
   );
 };
 
