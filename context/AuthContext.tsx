@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log(st);
       setAuthTokens(st);
       setUser(jwtDecode<User>(st));
-      console.log(user);
+      console.log(user); 
       localStorage.setItem(
         "authTokens",
         JSON.stringify({
