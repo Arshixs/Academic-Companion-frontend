@@ -27,7 +27,9 @@ export function Nav({ links, isCollapsed, setSelected }: NavProps) {
   // Function to handle clicking on a link
   const handleClick = (title: string) => {
     setSelected(title); // Set the selected title
+    console.log(`helloworld ${title}`)
   };
+  console.log(`hello: ${links}`);
 
   return (
     <div
@@ -75,7 +77,6 @@ export function Nav({ links, isCollapsed, setSelected }: NavProps) {
               )}
             >
               <link.icon className="mr-2 h-4 w-4" />
-              {link.title}
               {link.label && (
                 <span
                   className={cn(
@@ -84,7 +85,7 @@ export function Nav({ links, isCollapsed, setSelected }: NavProps) {
                       "text-background dark:text-white"
                   )}
                 >
-                  {link.label}
+                  {link.title}
                 </span>
               )}
             </Link>

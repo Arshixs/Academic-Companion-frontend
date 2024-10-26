@@ -4,17 +4,17 @@ import {
   useEffect,
   ReactNode,
   FormEvent,
+  use,
 } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie"; // Import js-cookie
 
-// Define the structure of the AuthTokens
 interface AuthTokens {
   access: string;
   refresh: string;
 }
 
-// Define the structure of the User (as per your JWT payload)
 interface User {
   token_type: string;
   exp: number;
@@ -23,46 +23,41 @@ interface User {
   user_id: number;
 }
 
-// Define the structure of the AuthContext
 interface AuthContextType {
   user: User | null;
   authTokens: AuthTokens | null;
-  loginUser: (username: string, password: string) => Promise<void>; // Updated type
+  loginUser: (username: string, password: string) => Promise<void>;
 }
 
-// Create the AuthContext with default `null` values
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export default AuthContext;
 
-// Define props for the AuthProvider
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [authTokens, setAuthTokens] = useState<AuthTokens | null>(() =>
-    localStorage.getItem("authTokens")
-      ? JSON.parse(localStorage.getItem("authTokens")!)
-      : null
-  );
+  const [authTokens, setAuthTokens] = useState<AuthTokens | null>(() => {
+    const access = Cookies.get("access_token");
+    const refresh = Cookies.get("refresh_token");
+    return access && refresh ? { access, refresh } : null;
+  });
 
-  const [user, setUser] = useState<User | null>(() =>
-    localStorage.getItem("authTokens")
-      ? jwtDecode<User>(localStorage.getItem("authTokens")!)
-      : null
-  );
+  const [user, setUser] = useState<User | null>(() => {
+    const access = Cookies.get("access_token");
+    return access ? jwtDecode<User>(access) : null;
+  });
 
   const navigate = useNavigate();
 
-  // Function to log in a user
   const loginUser = async (username: string, password: string) => {
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
     const raw = JSON.stringify({
-      username: username,
-      password: password,
+      username,
+      password,
     });
 
     const requestOptions = {
@@ -76,32 +71,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       requestOptions
     );
     const data = await response.json();
-
+    const user = JSON.stringify(data.user_data)
     if (response.status === 200) {
-      console.log(data);
-      const st = data.access_token.replace(/\s+/g, "");
-      console.log(st);
-      setAuthTokens(st);
-      setUser(jwtDecode<User>(st));
-      console.log(user); 
-      localStorage.setItem(
-        "authTokens",
-        JSON.stringify({
-          access: data.access_token,
-          refresh: data.refresh_token,
-        })
-      );
-      localStorage.setItem(
-        "user",
-        JSON.stringify(data.user_data)
-      );
+      const access = data.access_token.replace(/\s+/g, "");
+      const refresh = data.refresh_token;
+
+      localStorage.setItem("user", JSON.stringify(data.user_data));
+
+      // Store tokens in cookies
+      Cookies.set("access_token", access, { secure: true, sameSite: "Strict" });
+      Cookies.set("refresh_token", refresh, {
+        secure: true,
+        sameSite: "Strict",
+      });
+      Cookies.set("user", user, {
+        secure: true,
+        sameSite: "Strict",
+      });
+
+      setAuthTokens({ access, refresh });
+      setUser(jwtDecode<User>(access));
       navigate("/");
     } else {
       alert("Something went wrong!");
     }
   };
 
-  // Context data to be passed
   const contextData: AuthContextType = {
     user,
     authTokens,

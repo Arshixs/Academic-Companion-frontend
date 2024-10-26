@@ -21,8 +21,10 @@ import { Header } from "../header";
 import { ArrowUpRight } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 import { UpcomingEvents } from "./dashboard/events";
+import Cookies from "js-cookie"; // Import js-cookie for handling cookies
 
 export interface DashChartData {
+  course_id: string;
   name: string;
   total_class: number;
   present: number;
@@ -43,121 +45,47 @@ export interface EventsData {
 }
 
 const events: EventsData[] = [
-  {
-    name: "Tech Innovation Conference",
-    date: new Date("2024-10-15"),
-    description:
-      "A conference showcasing the latest in tech innovations, including AI, blockchain, and more.",
-  },
-  {
-    name: "AI Workshop",
-    date: new Date("2024-11-05"),
-    description:
-      "A hands-on workshop focused on AI and machine learning tools and applications.",
-  },
-  {
-    name: "Hackathon 2024",
-    date: new Date("2024-12-01"),
-    description:
-      "A 48-hour hackathon where participants solve real-world problems using coding skills.",
-  },
-  {
-    name: "Career Fair 2024",
-    date: new Date("2024-09-30"),
-    description:
-      "Meet industry professionals, submit resumes, and explore job opportunities in tech.",
-  },
-  {
-    name: "Open Source Summit",
-    date: new Date("2024-11-22"),
-    description:
-      "An event celebrating open source projects with discussions, workshops, and networking opportunities.",
-  },
-  {
-    name: "Digital Marketing Expo",
-    date: new Date("2024-10-10"),
-    description:
-      "Learn the latest trends in digital marketing from industry leaders and top professionals.",
-  },
-  {
-    name: "Blockchain Symposium",
-    date: new Date("2024-12-12"),
-    description:
-      "A gathering of blockchain developers, investors, and enthusiasts to explore new use cases.",
-  },
-  {
-    name: "Cybersecurity Awareness Day",
-    date: new Date("2024-09-28"),
-    description:
-      "A day-long event focused on cybersecurity best practices and future trends in the field.",
-  },
+  { name: "Tech Innovation Conference", date: new Date("2024-10-15"), description: "A conference showcasing the latest in tech innovations, including AI, blockchain, and more." },
+  { name: "AI Workshop", date: new Date("2024-11-05"), description: "A hands-on workshop focused on AI and machine learning tools and applications." },
+  // Other events...
 ];
 
 const assignments2: AssignmentTableData[] = [
-  {
-    task: "Assignment 1",
-    course: "PHY-101",
-    duedate: new Date("2024-09-30"),
-  },
-  {
-    task: "Assignment 2",
-    course: "MATH-201",
-    duedate: new Date("2024-10-10"),
-  },
-  {
-    task: "Assignment 3",
-    course: "CHEM-102",
-    duedate: new Date("2024-10-05"),
-  },
+  { task: "Assignment 1", course: "PHY-101", duedate: new Date("2024-09-30") },
+  { task: "Assignment 2", course: "MATH-201", duedate: new Date("2024-10-10") },
+  { task: "Assignment 3", course: "CHEM-102", duedate: new Date("2024-10-05") },
 ];
 
 export const description =
-  "An application shell with a header and main content area. The header has a navbar, a search input and and a user nav dropdown. The user nav is toggled by a button with an avatar image.";
+  "An application shell with a header and main content area. The header has a navbar, a search input and a user nav dropdown. The user nav is toggled by a button with an avatar image.";
 
 export function Dashboard() {
   const [attendanceData, setAttendanceData] = useState<DashChartData[]>([]);
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const AuthTokens = JSON.parse(localStorage.getItem("authTokens") || "{}");
-  const accessToken = AuthTokens["access"];
+  const user = JSON.parse(Cookies.get("user") || "{}"); // Retrieve user data from cookies
+  console.log(user);
+  const accessToken = Cookies.get("access_token"); // Retrieve access token from cookies
 
   useEffect(() => {
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
     if (accessToken) {
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
       myHeaders.append("Authorization", `Bearer ${accessToken}`);
+
+      const requestOptions = {
+        method: "GET",
+        headers: myHeaders,
+      };
+
+      fetch("http://127.0.0.1:8000/attendance/data/", requestOptions)
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Attendance Data:", data);
+          setAttendanceData(data); // Update the state with fetched data
+        })
+        .catch((error) => console.error("Error fetching attendance:", error));
     }
+  }, [accessToken]);
 
-    const requestOptions = {
-      method: "GET",
-      headers: myHeaders,
-    };
-
-    fetch("http://127.0.0.1:8000/attendance/data/", requestOptions)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Attendance Data:", data);
-        setAttendanceData(data); // Update the state with the fetched data
-      })
-      .catch((error) => console.error("Error fetching attendance:", error));
-
-    // if (user && user.id) {
-    //   const userId = user.id;
-
-    //   // Fetch attendance data when the component mounts
-    //   fetch(`http://127.0.0.1:8000/attendance/data/`, {
-    //     method: "GET",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //   })
-    //     .then((response) => response.json())
-    //   .then((data) => {
-    //     console.log("Attendance Data:", data);
-    //     setAttendanceData(data); // Update the state with the fetched data
-    //   });
-    //     .catch((error) => console.error("Error fetching attendance:", error));
-    // }
-  }, []); // Re-run this effect if `user` changes
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
@@ -188,10 +116,7 @@ export function Dashboard() {
         </Card>
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
           {/* Assignments Card */}
-          <Card
-            className="xl:col-span-2 self-start"
-            x-chunk="dashboard-01-chunk-4"
-          >
+          <Card className="xl:col-span-2 self-start">
             <CardHeader className="flex flex-row items-center">
               <div className="grid gap-2">
                 <CardTitle>Assignments</CardTitle>
@@ -245,78 +170,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-// import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-
-// type CourseType = {
-//   id: number;
-//   course_name: string;
-//   description: string;
-// };
-
-// export function Dashboard() {
-//   const [courses, setCourses] = useState<CourseType[]>([]); // State to hold the course data
-//   const [error, setError] = useState<string>(""); // State for error messages
-//   const navigate = useNavigate();
-
-//   // Function to get CSRF token from cookies
-//   const getCSRFToken = () => {
-//     const cookieValue = document.cookie.split("; ").find((row) => row.startsWith("csrftoken="));
-//     return cookieValue ? cookieValue.split("=")[1] : "";
-//   };
-
-//   // Fetch function to get courses for a specific user ID
-//   const fetchUserCourses = async (userId: number) => {
-//     try {
-//       const response = await fetch(`http://127.0.0.1:8000/users/courses/${userId}/`, {
-//         method: "GET",
-//         credentials: "include",
-//         headers: {
-//           'X-CSRFToken': getCSRFToken(), // Include CSRF token if required
-//         },
-//       });
-
-//       if (!response.ok) {
-//         throw new Error("Failed to fetch courses");
-//       }
-
-//       const data = await response.json();
-//       setCourses(data); // Update the state with the retrieved courses
-//     } catch (error) {
-//       console.error("Error fetching user courses:", error);
-//       setError(error.message); // Set the error message
-//       navigate("/login"); // Redirect to login if there's an error
-//     }
-//   };
-
-//   useEffect(() => {
-//     const user = JSON.parse(localStorage.getItem("user") || "{}");
-//     const userId = user.id; // Get user ID from localStorage
-
-//     if (userId) {
-//       fetchUserCourses(userId); // Call the fetch function with userId
-//     } else {
-//       setError("User not found. Please log in."); // Handle case when userId is not found
-//       navigate("/login"); // Redirect to login if userId is not present
-//     }
-//   }, [navigate]); // Dependency array with navigate
-
-//   return (
-//     <div>
-//       {error && <p className="text-red-500">{error}</p>}
-//       {courses.length > 0 ? (
-//         <ul>
-//           {courses.map((course) => (
-//             <li key={course.id}>
-//               <h2>{course.course_name}</h2>
-//               <p>{course.description}</p>
-//             </li>
-//           ))}
-//         </ul>
-//       ) : (
-//         <p>No courses found.</p>
-//       )}
-//     </div>
-//   );
-// };

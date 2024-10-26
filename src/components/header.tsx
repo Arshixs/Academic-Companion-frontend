@@ -39,7 +39,7 @@ export const Header = () => {
           Dashboard
         </Link>
         <Link
-          href="/"
+          href="/attendance"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           Attendance

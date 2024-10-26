@@ -34,12 +34,13 @@ const chartConfig = {
 } satisfies ChartConfig
 
 // Single card component
-export function AttendanceCard({ data }: { data: DashChartData }) {
-  const attendancePercentage = Math.round((data.present / data.total_class) * 100)
+export function AttendanceCard({ className, data }: { className?: string, data: DashChartData })
+{
+  const attendancePercentage = (data.total_class!=0?Math.round((data.present / data.total_class) * 100):0);
   const endAngle = (data.present / data.total_class) * 360
-
+    console.log("flex flex-col ".concat(className?className:""));
   return (
-    <Card className="flex flex-col">
+    <Card className={"flex flex-col ".concat(className?className:"")}>
       <CardHeader className="items-center pb-0">
         <CardTitle>{data.name}</CardTitle> {/* Use the name dynamically */}
         <CardDescription>Total Classes: {data.total_class}</CardDescription>
