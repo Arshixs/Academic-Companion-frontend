@@ -232,6 +232,7 @@
                       onChange={(e) => handleMaximizedNoteUpdate({ title: e.target.value })}
                       placeholder="Title"
                       className="w-full bg-transparent border-none focus:outline-none text-xl font-medium mb-4"
+                      autoFocus={false} 
                     />
                     <textarea
                       value={maximizedNote.content}
