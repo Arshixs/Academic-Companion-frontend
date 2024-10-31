@@ -1,7 +1,5 @@
 import { Metadata } from "next";
 import Image from "next/image";
-import { z } from "zod";
-
 import { columns } from "./assignment/components/columns";
 import { DataTable } from "./assignment/components/data-table";
 import { UserNav } from "./assignment/components/user-nav";
@@ -29,6 +27,7 @@ import {
   SelectValue,
 } from "@radix-ui/react-select";
 import { Label } from "../ui/label";
+import AssignmentDialog from "./assignment/add-assignments";
 
 export interface AssignmentData {
   id: 1;
@@ -42,14 +41,35 @@ export interface AssignmentData {
   updated_at: string;
 }
 
+interface NewTaskData {
+  title: string;
+  description: string;
+  status: AssignmentData["status"];
+  priority: AssignmentData["priority"];
+  label: number;
+}
+
+const INITIAL_TASK_STATE: NewTaskData = {
+  title: "",
+  description: "",
+  status: "todo",
+  priority: "medium",
+  label: 1,
+};
+
 export const metadata: Metadata = {
   title: "Tasks",
   description: "A task and issue tracker build using Tanstack Table.",
 };
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+
 export default function AssignmentPage() {
   const [assignments, setAssignment] = useState<AssignmentData[]>([]);
   const user = JSON.parse(Cookies.get("user") || "{}"); // Retrieve user data from cookies
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const accessToken = Cookies.get("access_token"); // Retrieve access token from cookies
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,23 +81,48 @@ export default function AssignmentPage() {
     label: 1,
   });
 
-  useEffect(() => {
-    if (accessToken) {
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("Authorization", `Bearer ${accessToken}`);
-      const requestOptions = {
-        method: "GET",
-        headers: myHeaders,
-      };
-
-      fetch("http://127.0.0.1:8000/assignment/assignments/", requestOptions)
-        .then((response) => response.json())
-        .then((data) => {
-          setAssignment(data); // Update the state with fetched data
-        })
-        .catch((error) => console.error(error));
+  const getAuthHeaders = () => {
+    if (!accessToken) {
+      throw new Error("No access token available");
     }
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    };
+  };
+
+  const fetchAssignments = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE_URL}/assignment/assignments/`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAssignment(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch assignments"
+      );
+      console.error("Error fetching assignments:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!accessToken) {
+      setError("No access token found. Please log in.");
+      return;
+    }
+    fetchAssignments();
   }, [accessToken]);
 
   for (const obj of assignments) {
@@ -89,71 +134,46 @@ export default function AssignmentPage() {
       [field]: value,
     }));
   };
-  const fetchAssignments = () => {
-    if (accessToken) {
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("Authorization", `Bearer ${accessToken}`);
 
-      fetch("http://127.0.0.1:8000/assignment/assignments/", {
-        method: "GET",
-        headers: myHeaders,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          setAssignment(data);
-        })
-        .catch((error) => console.error("Error fetching assignments:", error));
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accessToken) return;
 
-    setIsSubmitting(true);
+    if (!accessToken) {
+      setError("Please log in to create tasks");
+      return;
+    }
 
     try {
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("Authorization", `Bearer ${accessToken}`);
+      setIsSubmitting(true);
+      setError(null);
 
-      const response = await fetch(
-        "http://127.0.0.1:8000/assignment/assignments/",
-        {
-          method: "POST",
-          headers: myHeaders,
-          body: JSON.stringify(newTask),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/assignment/assignments/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(newTask),
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to create task");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create task");
       }
 
-      // Reset form and close dialog
-      setNewTask({
-        title: "",
-        description: "",
-        status: "todo",
-        priority: "medium",
-        label: 1,
-      });
+      await fetchAssignments();
+      setNewTask(INITIAL_TASK_STATE);
       setIsDialogOpen(false);
-
-      // Refresh assignments list
-      fetchAssignments();
-    } catch (error) {
-      console.error("Error creating task:", error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create task");
+      console.error("Error creating task:", err);
     } finally {
       setIsSubmitting(false);
     }
   };
+
   const transformedTasks = assignments.map((task) => ({
     id: task.title, // Use the title as the new id
     title: task.description, // Use description as the new title
     status: task.status, // Set a default status
-    label: "documentation", // Set a default label
+    label: task.label_name, // Set a default label
     priority: task.priority,
     created_at: task.created_at,
     updated_at: task.updated_at,
@@ -165,7 +185,7 @@ export default function AssignmentPage() {
   return (
     <>
       <Header />
-      <Dialog>
+      {/* <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline">Edit Profile</Button>
         </DialogTrigger>
@@ -202,8 +222,8 @@ export default function AssignmentPage() {
             <Button type="submit">Save changes</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-      )
+      </Dialog> */}
+
       <div className="md:hidden">
         <Image
           src="/examples/tasks-light.png"
@@ -223,17 +243,20 @@ export default function AssignmentPage() {
       <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex">
         <div className="flex items-center justify-between space-y-2">
           <div>
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">
-                Assignments!
-              </h2>
-              <p className="text-muted-foreground">
-                Here&apos;s a list of your tasks for this month!
-              </p>
-            </div>
+            <h2 className="text-2xl font-bold tracking-tight">Assignments</h2>
+            <p className="text-muted-foreground">
+              Here's a list of your tasks for this month!
+            </p>
+            {error && <p className="text-red-500 mt-2">{error}</p>}
           </div>
           <div className="flex items-center space-x-2">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <AssignmentDialog
+              isOpen={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+            {/* <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="flex items-center">
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -319,15 +342,21 @@ export default function AssignmentPage() {
                   </Button>
                 </form>
               </DialogContent>
-            </Dialog>
+            </Dialog> */}
           </div>
         </div>
 
-        <DataTable
-          onUpdateRow={assignments}
-          data={transformedTasks}
-          columns={columns}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32">
+            <p>Loading assignments...</p>
+          </div>
+        ) : (
+          <DataTable
+            onUpdateRow={assignments}
+            data={transformedTasks}
+            columns={columns}
+          />
+        )}
       </div>
     </>
   );
