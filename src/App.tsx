@@ -7,7 +7,7 @@ import { LoginForm } from "./components/pages/login";
 import { SignUpForm } from "./components/pages/signup";
 import PrivateRoute from "../utils/PrivateRoute"; // Make sure this path is correct
 import { AuthProvider } from "../context/AuthContext"; // Make sure this path is correct
-import { NotesGrid } from "./components/pages/notes";
+import { NotesGrid } from "./components/pages/notes/notegrid";
 import Calendar from "./components/pages/calendar";
 
 function App() {
