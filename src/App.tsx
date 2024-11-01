@@ -7,6 +7,7 @@ import { LoginForm } from "./components/pages/login";
 import { SignUpForm } from "./components/pages/signup";
 import PrivateRoute from "../utils/PrivateRoute"; // Make sure this path is correct
 import { AuthProvider } from "../context/AuthContext"; // Make sure this path is correct
+import { NotesGrid } from "./components/pages/notes";
 
 function App() {
   return (
@@ -27,6 +28,10 @@ function App() {
               <Route
                 path="/attendance"
                 element={<PrivateRoute element={AttendancePage} />}
+              />
+              <Route
+                path="/notes"
+                element={<PrivateRoute element={NotesGrid} />}
               />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
