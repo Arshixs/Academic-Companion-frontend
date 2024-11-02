@@ -1,9 +1,17 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "../../../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { labels, priorities, statuses } from "../data/data";
 import { Task } from "../data/schema";
@@ -77,12 +85,36 @@ export const columns: ColumnDef<Task>[] = [
       }
 
       return (
-        <div className="flex w-[100px] items-center">
-          {status.icon && (
-            <status.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-          )}
-          <span>{status.label}</span>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 flex items-center gap-2">
+              {status.icon && (
+                <status.icon className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span>{status.label}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {statuses.map((statusOption) => (
+              <DropdownMenuItem
+                key={statusOption.value}
+                onClick={() => {
+                  // Here you would typically update the status
+                  console.log(`Changing status to: ${statusOption.value}`);
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  {statusOption.icon && (
+                    <statusOption.icon className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span>{statusOption.label}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
     filterFn: (row, id, value) => {
@@ -104,12 +136,36 @@ export const columns: ColumnDef<Task>[] = [
       }
 
       return (
-        <div className="flex items-center">
-          {priority.icon && (
-            <priority.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-          )}
-          <span>{priority.label}</span>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 flex items-center gap-2">
+              {priority.icon && (
+                <priority.icon className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span>{priority.label}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {priorities.map((priorityOption) => (
+              <DropdownMenuItem
+                key={priorityOption.value}
+                onClick={() => {
+                  // Here you would typically update the priority
+                  console.log(`Changing priority to: ${priorityOption.value}`);
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  {priorityOption.icon && (
+                    <priorityOption.icon className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span>{priorityOption.label}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
     filterFn: (row, id, value) => {
@@ -118,6 +174,6 @@ export const columns: ColumnDef<Task>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <DataTableRowActions row={row}/>,
   },
 ];

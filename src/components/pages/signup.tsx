@@ -25,6 +25,7 @@ export function SignUpForm() {
     branch: "",
     currentSemester: "",
     college: "",
+    college_location: "",
   });
 
   const handleInputChange = (e) => {
@@ -46,11 +47,14 @@ export function SignUpForm() {
       password: formData.password,
       branch: formData.branch,
       current_semester: parseInt(formData.currentSemester),
-      college: formData.college,
+      college_name: formData.college,
+      college_location: formData.college_location,
     };
 
+    console.log(dataToSubmit);
+
     try {
-      const response = await fetch("http://127.0.0.1:8000/users/create/", {
+      const response = await fetch("http://127.0.0.1:8000/users/register/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,6 +163,16 @@ export function SignUpForm() {
                   id="college"
                   placeholder="College Name"
                   value={formData.college}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="college">College Location</Label>
+                <Input
+                  id="college_location"
+                  placeholder="College Location"
+                  value={formData.college_location}
                   onChange={handleInputChange}
                   required
                 />
