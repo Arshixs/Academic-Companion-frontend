@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Pin, Trash2, Maximize2 } from "lucide-react";
 import { Note } from "./notegrid";
+import { Textarea } from "@/components/ui/textarea";
 
 export const NoteCard: React.FC<{
   note: Note;
@@ -43,7 +44,7 @@ export const NoteCard: React.FC<{
       }`}
     >
       <div className="p-4">
-        <Input
+        <input
           type="text"
           value={localTitle}
           onChange={handleTitleChange}

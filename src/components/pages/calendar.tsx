@@ -22,12 +22,16 @@ import { Button } from "../ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"; // Assuming you have a Sheet component
 import { Header } from "../header";
 import { calendarService } from "./calendar/calendarapi";
+import Cookies from "js-cookie";
 
 const Calendar = () => {
+  const user = JSON.parse(Cookies.get("user") || "{}"); // Retrieve user data from cookies
+  const accessToken = Cookies.get("access_token"); // Retrieve access token from cookies
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<{
     [key: string]: {
+      id: number;
       title: string;
       description: string;
       startTime: string;
@@ -114,6 +118,37 @@ const Calendar = () => {
     return days;
   };
 
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/events/", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const monthEvents = await response.json();
+
+      const transformedEvents = monthEvents.reduce((acc, event) => {
+        const dateKey = event.date;
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          startTime: event.start_time,
+          endTime: event.end_time,
+          color: event.color,
+        });
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      setEvents(transformedEvents);
+    } catch (error) {
+      console.error("Failed to fetch events:", error);
+    }
+  };
+
   const handlePrevMonth = () => {
     setCurrentDate(
       new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
@@ -157,47 +192,82 @@ const Calendar = () => {
           color: newEvent.color,
         };
 
-        if (isEditing && editingEventIndex !== null) {
-          // Update existing event
-          await calendarService.updateEvent(editingEventIndex, eventData);
-        } else {
-          // Create new event
-          await calendarService.createEvent(eventData);
-        }
+        const response = await fetch("http://127.0.0.1:8000/events/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(eventData),
+        });
+        const result = await response.json();
+        console.log(result);
 
-        // Refresh events for the current month
-        const monthEvents = await calendarService.getMonthEvents(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1
-        );
-        // Transform and set events...
-
+        // Refresh events and reset form
+        fetchEvents();
         resetEventForm();
         setShowEventDialog(false);
       } catch (error) {
-        console.error("Failed to save event:", error);
-        // Handle error (show notification, etc.)
+        console.error("Failed to create event:", error);
       }
     }
   };
-
-  const handleDeleteEvent = async (id: number) => {
+  const handleUpdateEvent = async (eventId: number) => {
     try {
-      await calendarService.deleteEvent(id);
-      // Refresh events for the current month
-      const monthEvents = await calendarService.getMonthEvents(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1
-      );
-      // Transform and set events...
+      const eventData = {
+        title: newEvent.title,
+        description: newEvent.description,
+        date: formatDate(newEvent.date),
+        start_time: newEvent.startTime,
+        end_time: newEvent.endTime,
+        color: newEvent.color,
+      };
+
+      const response = await fetch(`http://127.0.0.1:8000/events/${eventId}/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer your-jwt-token",
+        },
+        body: JSON.stringify(eventData),
+      });
+      const result = await response.json();
+      console.log(result);
+
+      // Refresh events and reset form
+      fetchEvents();
+      resetEventForm();
+      setShowEventDialog(false);
     } catch (error) {
-      console.error("Failed to delete event:", error);
-      // Handle error (show notification, etc.)
+      console.error("Failed to update event:", error);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/events/${eventId}/`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        console.log("Event deleted successfully");
+        fetchEvents();
+      } else {
+        console.error("Failed to delete event");
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
     }
   };
 
   const getDayEvents = (date: Date) => {
     const dateKey = formatDate(date);
+
+    console.log(dateKey, events);
     return events[dateKey] || [];
   };
 
@@ -226,38 +296,8 @@ const Calendar = () => {
   };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const monthEvents = await calendarService.getMonthEvents(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1
-        );
-
-        // Transform the events into the format expected by the calendar
-        const transformedEvents = monthEvents.reduce((acc, event) => {
-          const dateKey = event.date;
-          if (!acc[dateKey]) {
-            acc[dateKey] = [];
-          }
-          acc[dateKey].push({
-            title: event.title,
-            description: event.description,
-            startTime: event.start_time,
-            endTime: event.end_time,
-            color: event.color,
-          });
-          return acc;
-        }, {} as Record<string, any[]>);
-
-        setEvents(transformedEvents);
-      } catch (error) {
-        console.error("Failed to fetch events:", error);
-        // Handle error (show notification, etc.)
-      }
-    };
-
     fetchEvents();
-  }, [currentDate]);
+  }, [currentDate, accessToken]);
 
   return (
     <>
@@ -338,7 +378,7 @@ const Calendar = () => {
                         dark:bg-${event.color}-900/20 dark:text-${event.color}-400 cursor-pointer hover:opacity-80`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEditEvent(event, idx, date); // Pass date for editing
+                          handleEditEvent(event, event.id, date); // Pass date for editing
                         }}
                       >
                         {event.title}
@@ -379,10 +419,13 @@ const Calendar = () => {
               {/* Date Input */}
               <Input
                 type="date"
-                value={newEvent.date.toISOString().split("T")[0]} // Format date for input
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, date: new Date(e.target.value) })
-                } // Update date
+                value={newEvent.date.toLocaleDateString("en-CA")} // 'en-CA' gives YYYY-MM-DD format
+                autoFocus={true}
+                onChange={(e) => {
+                  const parts = e.target.value.split("-");
+                  const localDate = new Date(parts[0], parts[1] - 1, parts[2]); // Create local date from input
+                  setNewEvent({ ...newEvent, date: localDate });
+                }}
               />
               <Input
                 placeholder="Event Title"
@@ -430,7 +473,7 @@ const Calendar = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleAddEvent}>
+              <Button onClick={handleUpdateEvent}>
                 {isEditing ? "Update Event" : "Add Event"}
               </Button>
               <Button
@@ -492,7 +535,7 @@ const Calendar = () => {
                         className="text-red-500"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteEvent(idx);
+                          handleDeleteEvent(event.id); // Pass the unique event ID here
                         }}
                       >
                         <Trash className="h-4 w-4" />
