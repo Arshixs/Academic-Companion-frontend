@@ -121,7 +121,7 @@ const Calendar = () => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          "Authorization": `Bearer ${accessToken}`,
         },
       });
       const monthEvents = await response.json();

@@ -16,6 +16,7 @@ import { NotesGrid } from "./components/pages/notes/notegrid";
 import { Toaster } from "./components/ui/toaster";
 import Calendar from "./components/pages/calendar";
 import LandingPage from "./components/pages/home";
+import CodeEditor from "./components/pages/code_editor";
 
 function App() {
   return (
@@ -45,7 +46,10 @@ function App() {
                 path="/calendar"
                 element={<PrivateRoute element={Calendar} />}
               />
-              <Route path="/home" element={<LandingPage />} />
+              <Route
+                path="/home"
+                element={<PrivateRoute element={LandingPage} />}
+              />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
               {/* Redirect any other routes to /home */}
