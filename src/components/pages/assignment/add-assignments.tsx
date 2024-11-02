@@ -1,59 +1,82 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PlusCircle } from "lucide-react";
+import React, { useState } from 'react';
+import Cookies from 'js-cookie';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PlusCircle } from 'lucide-react';
 
-const INITIAL_TASK_STATE = {
-  title: "",
-  description: "",
-  status: "todo",
-  priority: "medium",
-  label: 1,
-};
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
-export default function AssignmentDialog({
-  isOpen,
-  onOpenChange,
-  onSubmit,
-  isSubmitting,
-}) {
-  const [newTask, setNewTask] = useState(INITIAL_TASK_STATE);
+const AssignmentDialog = ({ isOpen, onOpenChange, isSubmitting,assignment,setAssigment }) => {
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    status: "todo",
+    priority: "medium",
+    label: 1
+  });
 
   const handleInputChange = (field, value) => {
-    setNewTask((prev) => ({
+    setNewTask(prev => ({
       ...prev,
-      [field]: value,
+      [field]: value
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(newTask);
-    setNewTask(INITIAL_TASK_STATE);
+    
+    const accessToken = Cookies.get('access_token');
+    if (!accessToken) {
+      console.error('No access token found');
+      return;
+    }
+
+    try {
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      myHeaders.append("Authorization", `Bearer ${accessToken}`);
+
+      const data = {...newTask,label:1}
+      console.log("Hello",JSON.stringify(data));
+
+      const response = await fetch(`${API_BASE_URL}/assignment/assignments/`, {
+        method: 'POST',
+        headers: myHeaders,
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      setAssigment([...assignment,result]);
+      console.log('Success:', result);
+      
+      // Reset form and close dialog
+      setNewTask({
+        title: "",
+        description: "",
+        status: "todo",
+        priority: "medium",
+        label: 1
+      });
+      onOpenChange(false);
+      
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <PlusCircle className="h-4 w-4" />
+        <Button className="flex items-center">
+          <PlusCircle className="mr-2 h-4 w-4" />
           Add Task
         </Button>
       </DialogTrigger>
@@ -72,7 +95,6 @@ export default function AssignmentDialog({
               value={newTask.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Enter task title"
-              className="w-full"
             />
           </div>
 
@@ -83,7 +105,6 @@ export default function AssignmentDialog({
               value={newTask.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               placeholder="Enter task description"
-              className="w-full"
             />
           </div>
 
@@ -93,7 +114,7 @@ export default function AssignmentDialog({
               value={newTask.status}
               onValueChange={(value) => handleInputChange("status", value)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -110,7 +131,7 @@ export default function AssignmentDialog({
               value={newTask.priority}
               onValueChange={(value) => handleInputChange("priority", value)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger>
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
               <SelectContent>
@@ -121,13 +142,17 @@ export default function AssignmentDialog({
             </Select>
           </div>
 
-          <DialogFooter>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Task"}
-            </Button>
-          </DialogFooter>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating..." : "Create Task"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default AssignmentDialog;

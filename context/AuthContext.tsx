@@ -65,18 +65,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       headers: myHeaders,
       body: raw,
     };
+    console.log(raw);
 
     const response = await fetch(
       "http://127.0.0.1:8000/users/login/",
       requestOptions
     );
     const data = await response.json();
-    const user = JSON.stringify(data.user_data)
+    const user = JSON.stringify(data.user_data);
     if (response.status === 200) {
-      const access = data.access_token.replace(/\s+/g, "");
-      const refresh = data.refresh_token;
+      const access = data.access.replace(/\s+/g, "");
+      const refresh = data.refresh;
 
-      localStorage.setItem("user", JSON.stringify(data.user_data));
+      localStorage.setItem("user", JSON.stringify(data.user));
 
       // Store tokens in cookies
       Cookies.set("access_token", access, { secure: true, sameSite: "Strict" });
@@ -84,7 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         secure: true,
         sameSite: "Strict",
       });
-      Cookies.set("user", user, {
+      Cookies.set("user", JSON.stringify(data.user), {
         secure: true,
         sameSite: "Strict",
       });

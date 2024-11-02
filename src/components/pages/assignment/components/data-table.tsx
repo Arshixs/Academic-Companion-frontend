@@ -42,9 +42,23 @@ import { DataTablePagination } from "./data-table-pagination";
 import Cookies from "js-cookie";
 import { error } from "console";
 import { useNavigate } from "react-router-dom";
+import { priorities, statuses } from "../data/data";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@radix-ui/react-alert-dialog";
+import {
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
+import { Toast } from "@/components/ui/toast";
 
-export function DataTable({ data, columns, onUpdateRow }) {
-    const navigate = useNavigate();
+export function DataTable({ data, columns, onUpdateRow, onDataChange }) {
+  const navigate = useNavigate();
   const user = JSON.parse(Cookies.get("user") || "{}"); // Retrieve user data from cookies
   const accessToken = Cookies.get("access_token"); // Retrieve access token from cookies
   // Table state
@@ -55,6 +69,7 @@ export function DataTable({ data, columns, onUpdateRow }) {
     []
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   // Form state
   const [selectedRowData, setSelectedRowData] = React.useState<TData | null>(
@@ -97,12 +112,80 @@ export function DataTable({ data, columns, onUpdateRow }) {
     handleFieldChange("priority", priority);
   };
 
+  // New delete handler
+  const handleDelete = async () => {
+    if (!selectedRowData) return;
+    // console.log("delete",)
+
+    try {
+      setIsSubmitting(true);
+
+      let id = -1;
+      for (let i = 0; i < onUpdateRow.length; i++) {
+        console.log(onUpdateRow[i]);
+        console.log(
+          onUpdateRow[i]["title"],
+          selectedRowData.id,
+          onUpdateRow[i]["description"],
+          selectedRowData.title,
+          onUpdateRow[i]["created_at"],
+          selectedRowData.created_at
+        );
+        if (
+          onUpdateRow[i]["title"] === selectedRowData.id &&
+          onUpdateRow[i]["description"] === selectedRowData.title &&
+          onUpdateRow[i]["created_at"] === selectedRowData.created_at
+        ) {
+          id = onUpdateRow[i]["id"];
+          break;
+        }
+      }
+
+      if (id === -1) {
+        throw new Error("No such Note exists");
+      }
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/assignment/assignments/${id}/`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Update the UI by removing the deleted item
+      if (onDataChange) {
+        onDataChange((prevData) =>
+          prevData.filter(
+            (item) =>
+              !(
+                item.id === id
+              )
+          )
+        );
+      }
+
+      // Reset states and close dialogs
+      setSelectedRowData(null);
+      setEditedData(null);
+      setShowDeleteDialog(false);
+
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle save
   const handleSave = async () => {
     if (!editedData || !selectedRowData) return;
 
     try {
-
       // Call the update callback
       setIsSubmitting(true);
 
@@ -133,17 +216,30 @@ export function DataTable({ data, columns, onUpdateRow }) {
       let id = -1;
       for (let i = 0; i < onUpdateRow.length; i++) {
         console.log(onUpdateRow[i]);
-        console.log(onUpdateRow[i]["title"],selectedRowData.id,onUpdateRow[i]["description"],selectedRowData.title);
-        if(onUpdateRow[i]["title"]===selectedRowData.id&&onUpdateRow[i]["description"]===selectedRowData.title){
-            id = onUpdateRow[i]["id"];
-            break;
+        console.log(
+          onUpdateRow[i]["title"],
+          selectedRowData.id,
+          onUpdateRow[i]["description"],
+          selectedRowData.title,
+          onUpdateRow[i]["created_at"],
+          selectedRowData.created_at
+        );
+        if (
+          onUpdateRow[i]["title"] === selectedRowData.id &&
+          onUpdateRow[i]["description"] === selectedRowData.title &&
+          onUpdateRow[i]["created_at"] === selectedRowData.created_at
+        ) {
+          id = onUpdateRow[i]["id"];
+          break;
         }
-    }
+      }
 
-    if (id === -1) {
+      console.log("raw", raw);
+
+      if (id === -1) {
         throw new Error("No such Note exist");
-    }
-    
+      }
+
       const requestOptions = {
         method: "PATCH",
         headers: myHeaders,
@@ -171,7 +267,7 @@ export function DataTable({ data, columns, onUpdateRow }) {
       setSelectedRowData(null);
       setEditedData(null);
       // i want to refresh the page if the code get here for ChatGpt
-      window.location.reload();
+        window.location.reload();
     } catch (error) {
       console.error("Failed to save changes:", error);
       // Here you might want to show an error message to the user
@@ -179,6 +275,7 @@ export function DataTable({ data, columns, onUpdateRow }) {
       setIsSubmitting(false);
     }
   };
+  // Handle save
 
   const table = useReactTable({
     data,
@@ -234,12 +331,14 @@ export function DataTable({ data, columns, onUpdateRow }) {
                       className="cursor-pointer hover:bg-muted/50"
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
+                        <>
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        </>
                       ))}
                     </TableRow>
                   </SheetTrigger>
@@ -253,9 +352,9 @@ export function DataTable({ data, columns, onUpdateRow }) {
                               Title
                             </label>
                             <textarea
-                              value={editedData?.title || ""}
+                              value={editedData?.id || ""}
                               onChange={(e) =>
-                                handleFieldChange("title", e.target.value)
+                                handleFieldChange("id", e.target.value)
                               }
                               className="mt-1 p-2 border rounded-md w-full h-20 resize-none"
                             />
@@ -265,9 +364,9 @@ export function DataTable({ data, columns, onUpdateRow }) {
                               Description
                             </label>
                             <textarea
-                              value={editedData?.description || ""}
+                              value={editedData?.title || ""}
                               onChange={(e) =>
-                                handleFieldChange("description", e.target.value)
+                                handleFieldChange("title", e.target.value)
                               }
                               className="mt-1 p-2 border rounded-md w-full h-20 resize-none"
                             />
@@ -278,25 +377,61 @@ export function DataTable({ data, columns, onUpdateRow }) {
                             </label>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                  {editedData?.status || "Select Status"}
+                                <Button
+                                  variant="ghost"
+                                  className="h-8 flex items-center gap-2"
+                                >
+                                  {/* Extract the current status */}
+                                  {statuses.find(
+                                    (status) =>
+                                      status.value === editedData?.status
+                                  ) ? (
+                                    <>
+                                      {React.createElement(
+                                        statuses.find(
+                                          (status) =>
+                                            status.value === editedData?.status
+                                        )?.icon,
+                                        {
+                                          className:
+                                            "h-4 w-4 text-muted-foreground",
+                                        }
+                                      )}
+                                      <span>
+                                        {
+                                          statuses.find(
+                                            (status) =>
+                                              status.value ===
+                                              editedData?.status
+                                          )?.label
+                                        }
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span>Select Status</span> // Fallback if status is not found
+                                  )}
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent>
-                                <DropdownMenuLabel>Status</DropdownMenuLabel>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>
+                                  Set Status
+                                </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                {["Present", "Absent", "No Class"].map(
-                                  (status) => (
-                                    <DropdownMenuItem
-                                      key={status}
-                                      onSelect={() =>
-                                        handleStatusChange(status)
-                                      }
-                                    >
-                                      {editedData?.status}
-                                    </DropdownMenuItem>
-                                  )
-                                )}
+                                {statuses.map((statusOption) => (
+                                  <DropdownMenuItem
+                                    key={statusOption.value}
+                                    onClick={() =>
+                                      handleStatusChange(statusOption.value)
+                                    }
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {statusOption.icon && (
+                                        <statusOption.icon className="h-4 w-4 text-muted-foreground" />
+                                      )}
+                                      <span>{statusOption.label}</span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                ))}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -306,8 +441,40 @@ export function DataTable({ data, columns, onUpdateRow }) {
                             </label>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                  {editedData?.priority || "Select Priority"}
+                                <Button
+                                  variant="ghost"
+                                  className="h-8 flex items-center gap-2"
+                                >
+                                  {/* Extract the current status */}
+                                  {statuses.find(
+                                    (status) =>
+                                      status.value === editedData?.status
+                                  ) ? (
+                                    <>
+                                      {React.createElement(
+                                        priorities.find(
+                                          (status) =>
+                                            status.value ===
+                                            editedData?.priority
+                                        )?.icon,
+                                        {
+                                          className:
+                                            "h-4 w-4 text-muted-foreground",
+                                        }
+                                      )}
+                                      <span>
+                                        {
+                                          priorities.find(
+                                            (status) =>
+                                              status.value ===
+                                              editedData?.priority
+                                          )?.label
+                                        }
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span>Select Priority</span> // Fallback if status is not found
+                                  )}
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent>
@@ -328,12 +495,19 @@ export function DataTable({ data, columns, onUpdateRow }) {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                          <div className="mt-4 space-x-2">
+                          <div className="w-full flex justify-around mt-4 space-x-2">
                             <Button
                               onClick={handleSave}
                               disabled={isSubmitting || !editedData}
                             >
                               {isSubmitting ? "Saving..." : "Save Changes"}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={handleDelete}
+                              disabled={isSubmitting || !editedData}
+                            >
+                              Delete
                             </Button>
                           </div>
                         </div>
@@ -356,6 +530,29 @@ export function DataTable({ data, columns, onUpdateRow }) {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      {/* Delete Confirmation Dialog
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              assignment and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmitting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog> */}
     </div>
   );
 }
