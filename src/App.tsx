@@ -9,6 +9,7 @@ import PrivateRoute from "../utils/PrivateRoute"; // Make sure this path is corr
 import { AuthProvider } from "../context/AuthContext"; // Make sure this path is correct
 import { NotesGrid } from "./components/pages/notes";
 import Calendar from "./components/pages/calendar";
+import LandingPage from "./components/pages/home";
 
 function App() {
   return (
@@ -37,6 +38,10 @@ function App() {
               <Route
                 path="/calendar"
                 element={<PrivateRoute element={Calendar} />}
+              />
+              <Route
+                path="/home"
+                element={<PrivateRoute element={LandingPage} />}
               />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
