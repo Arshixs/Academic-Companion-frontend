@@ -11,6 +11,7 @@ import { NotesGrid } from "./components/pages/notes/notegrid";
 import { Toaster } from "./components/ui/toaster";
 import Calendar from "./components/pages/calendar";
 import LandingPage from "./components/pages/home";
+import CodeEditor from "./components/pages/code_editor";
 
 function App() {
   return (
@@ -43,6 +44,10 @@ function App() {
               <Route
                 path="/home"
                 element={<PrivateRoute element={LandingPage} />}
+              />
+              <Route
+                path="/code"
+                element={<PrivateRoute element={CodeEditor} />}
               />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
