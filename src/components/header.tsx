@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Link from "next/link";
-import { CircleUser, Menu, Package2 } from "lucide-react";
+import { CircleUser, GraduationCap, Menu, Package2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ export const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [selected, setSelected] = useState("dashboard");
+  const access = Cookies.get("access_token");
 
   useEffect(() => {
     const path = location.pathname.substring(1) || "dashboard";
@@ -49,11 +50,13 @@ export const Header = () => {
     <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-lg px-4 md:px-6">
       {/* Logo - Always on the left */}
       <Link
-        href="#"
+        href={access?"/dashboard":"/home"}
         className="flex items-center gap-2 text-lg font-semibold md:text-base"
       >
-        <Package2 className="h-6 w-6" />
-        <span className="sr-only">Acme Inc</span>
+        <div className="flex items-center">
+          <GraduationCap className="h-8 w-8 text-primary" />
+          <span className="ml-2 text-xl font-bold">Academic Companion</span>
+        </div>
       </Link>
 
       {/* Navigation tabs - Now on the right */}
@@ -63,20 +66,22 @@ export const Header = () => {
             key={path}
             onClick={() => handleNavClick(path)}
             className={`${
-              selected === path
-                ? "text-foreground"
-                : "text-muted-foreground"
+              selected === path ? "text-foreground" : "text-muted-foreground"
             } transition-colors hover:text-foreground text-sm font-medium`}
           >
             {label}
           </button>
         ))}
       </nav>
-      
+
       {/* Mobile menu - Remains the same */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden ml-auto">
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0 md:hidden ml-auto"
+          >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>

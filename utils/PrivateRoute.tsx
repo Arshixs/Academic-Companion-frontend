@@ -5,7 +5,7 @@ import AuthContext from "../context/AuthContext"; // Update the path as needed
 function PrivateRoute({ element: Element }) {
   const { user } = useContext(AuthContext);
 
-  return user ? <Element /> : <Navigate to="/login" />;
+  return user ? <Element /> : <Navigate to="/home" />;
 }
 
 export default PrivateRoute;

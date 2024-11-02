@@ -20,8 +20,11 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ModeToggle } from "../mode-toggle";
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const features = [
@@ -39,9 +42,9 @@ const LandingPage = () => {
     },
     {
       icon: LineChart,
-      title: "Progress Analytics",
+      title: "Calendar",
       description:
-        "Visualize your academic progress with detailed analytics and insights",
+        "Track and manage your events with build in Calnedar",
     },
     {
       icon: BookOpen,
@@ -71,6 +74,13 @@ const LandingPage = () => {
     },
   ];
 
+  const handleLogin = () => {
+    navigate("/login");
+  };
+  const handleSignup = () => {
+    navigate("/signup");
+  };
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -85,12 +95,11 @@ const LandingPage = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:block">
               <div className="flex items-center space-x-4">
-                <Button variant="ghost">Features</Button>
-                <Button variant="ghost">Testimonials</Button>
-                <Button variant="ghost">Pricing</Button>
-                <Button variant="ghost">Contact</Button>
-                <Button variant="outline">Log in</Button>
-                <Button>Sign up</Button>
+                <ModeToggle />
+                <Button onClick={handleLogin} variant="outline">
+                  Log in
+                </Button>
+                <Button onClick={handleSignup}>Sign up</Button>
               </div>
             </div>
 
@@ -152,12 +161,9 @@ const LandingPage = () => {
               students.
             </p>
             <div className="mt-10 flex items-center justify-center gap-4">
-              <Button size="lg" className="gap-2">
+              <Button onClick={handleSignup} size="lg" className="gap-2">
                 Get Started Free
                 <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline">
-                View Demo
               </Button>
             </div>
           </div>
@@ -238,15 +244,8 @@ const LandingPage = () => {
               Join thousands of students already using Academic Companion
             </p>
             <div className="mt-10 flex items-center justify-center gap-4">
-              <Button size="lg" variant="secondary">
+              <Button onClick={handleSignup} size="lg" variant="secondary">
                 Create Free Account
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
-              >
-                Contact Sales
               </Button>
             </div>
           </div>
