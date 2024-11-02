@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { Header } from "../../header";
 import { Plus, Pin, Trash2 } from "lucide-react";
 import { NoteCard } from "./notecard";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface Note {
   id: number;
@@ -168,13 +169,13 @@ export const NotesGrid: React.FC = () => {
     <>
       <Header />
       <div className="p-4">
-        <div className="mb-6 flex gap-4 items-center">
+        <div className="mb-6 flex justify-center gap-4 items-center w-full">
           <Input
             type="text"
             placeholder="Search notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-md"
+            className="max-w-6xl border-2"
           />
           <Button onClick={createNote}>
             <Plus className="h-4 w-4 mr-2" /> New Note
@@ -201,7 +202,7 @@ export const NotesGrid: React.FC = () => {
 
         {unpinnedNotes.length > 0 && (
           <>
-            <h2 className="text-lg font-medium mb-4">Others</h2>
+            <h2 className="text-lg font-medium mb-4">{pinnedNotes.length > 0?"Others":""}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {unpinnedNotes.map((note) => (
                 <NoteCard
@@ -235,7 +236,7 @@ export const NotesGrid: React.FC = () => {
             {maximizedNote && (
               <div className="flex flex-col h-full">
                 <div className="flex-grow overflow-y-auto p-4">
-                  <Input
+                  <input
                     type="text"
                     value={maximizedNote.title}
                     onChange={(e) =>
@@ -245,7 +246,7 @@ export const NotesGrid: React.FC = () => {
                     className="w-full bg-transparent border-none focus:outline-none text-xl font-medium mb-4"
                     autoFocus={true}
                   />
-                  <textarea
+                  <Textarea
                     value={maximizedNote.content}
                     onChange={(e) =>
                       handleMaximizedNoteUpdate({ content: e.target.value })

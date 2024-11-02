@@ -7,8 +7,9 @@ import { LoginForm } from "./components/pages/login";
 import { SignUpForm } from "./components/pages/signup";
 import PrivateRoute from "../utils/PrivateRoute"; // Make sure this path is correct
 import { AuthProvider } from "../context/AuthContext"; // Make sure this path is correct
-import { NotesGrid } from "./components/pages/notes";
+import { NotesGrid } from "./components/pages/notes/notegrid";
 import { Toaster } from "./components/ui/toaster";
+import Calendar from "./components/pages/calendar";
 
 function App() {
   return (
@@ -33,6 +34,10 @@ function App() {
               <Route
                 path="/notes"
                 element={<PrivateRoute element={NotesGrid} />}
+              />
+              <Route
+                path="/calendar"
+                element={<PrivateRoute element={Calendar} />}
               />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
