@@ -26,7 +26,7 @@ export const Header = () => {
     setSelected(path);
   }, [location]);
 
-  const handleNavClick = (path) => {
+  const handleNavClick = (path:string) => {
     setSelected(path);
     navigate(`/${path === "dashboard" ? "" : path}`);
   };
@@ -43,6 +43,7 @@ export const Header = () => {
     { path: "assignment", label: "Assignment" },
     { path: "notes", label: "Notes" },
     { path: "calendar", label: "Calendar" },
+    { path: "code", label: "Code Editor" },
   ];
 
   return (

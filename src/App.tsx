@@ -49,6 +49,7 @@ function App() {
                 path="/code"
                 element={<PrivateRoute element={CodeEditor} />}
               />
+
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
             </Routes>

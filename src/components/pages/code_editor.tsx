@@ -48,43 +48,62 @@ import {
   FolderOpen,
   Star,
   Clock,
+  Trash
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Header from "../header";
 import Cookies from "js-cookie";
 
+type Language = "python" | "cpp" | "c" | "javascript";
+
 const CodeEditor = () => {
-  const [language, setLanguage] = useState("python");
-  const [code, setCode] = useState("");
-  const [output, setOutput] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("editor");
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [snippetTitle, setSnippetTitle] = useState("");
-  const [snippetDescription, setSnippetDescription] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
-  const [savedSnippets, setSavedSnippets] = useState([]);
-  const [isSavedSnippetsLoading, setIsSavedSnippetsLoading] = useState(false);
+  interface Snippet {
+    id: number;
+    title: string;
+    description: string;
+    code: string;
+    language: Language;
+    is_public: boolean;
+    created_at: string;
+  }
+
+  const [language, setLanguage] = useState<Language>("python");
+  const [code, setCode] = useState<string>("");
+  const [output, setOutput] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("editor");
+  const [saveDialogOpen, setSaveDialogOpen] = useState<boolean>(false);
+  const [snippetTitle, setSnippetTitle] = useState<string>("");
+  const [snippetDescription, setSnippetDescription] = useState<string>("");
+  const [isPublic, setIsPublic] = useState<boolean>(false);
+  const [savedSnippets, setSavedSnippets] = useState<Array<Snippet>>([]);
+  const [isSavedSnippetsLoading, setIsSavedSnippetsLoading] =useState<boolean>(false);
+
   const { theme } = useTheme();
   const accessToken = Cookies.get("access_token");
 
 
 
   // Fetch saved snippets
-  const fetchSavedSnippets = async () => {
+  const fetchSavedSnippets = async (): Promise<void> => {
     setIsSavedSnippetsLoading(true);
     try {
       const response = await fetch("http://127.0.0.1:8000/code/code", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
+
       if (response.ok) {
-        const data = await response.json();
+        // Expecting an array of snippets
+        const data: Snippet[] = await response.json();
+        // console.log(data);
         setSavedSnippets(data);
+      } else {
+        throw new Error("Failed to fetch snippets");
       }
     } catch (error) {
       console.error("Error fetching snippets:", error);
@@ -93,22 +112,24 @@ const CodeEditor = () => {
     }
   };
 
+
   useEffect(() => {
     fetchSavedSnippets();
   }, []);
 
-  const handleSaveSnippet = async () => {
+  const handleSaveSnippet = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
     setIsLoading(true);
     try {
-      // console.log(
-      //   JSON.stringify({
-      //     title: snippetTitle,
-      //     description: snippetDescription,
-      //     code,
-      //     language,
-      //     is_public: isPublic,
-      //   })
-      // );
+      console.log(
+        JSON.stringify({
+          title: snippetTitle,
+          description: snippetDescription,
+          code,
+          language,
+          is_public: isPublic,
+        })
+      );
       const response = await fetch("http://127.0.0.1:8000/code/code/", {
         method: "POST",
         headers: {
@@ -142,7 +163,32 @@ const CodeEditor = () => {
     }
   };
 
-  const loadSnippet = (snippet) => {
+  const handleDeleteSnippet = async (id: number): Promise<void> => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/code/code/${id}/`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        // Filter out the deleted snippet from the saved snippets list
+        setSavedSnippets((prevSnippets) =>
+          prevSnippets.filter((snippet) => snippet.id !== id)
+        );
+      } else {
+        throw new Error("Failed to delete snippet");
+      }
+    } catch (error) {
+      console.error("Error deleting snippet:", error);
+    }
+  };
+
+
+
+  const loadSnippet = (snippet:Snippet): void => {
     setLanguage(snippet.language);
     setCode(snippet.code);
     setActiveTab("editor");
@@ -155,7 +201,7 @@ const CodeEditor = () => {
     { value: "javascript", label: "JavaScript", icon: "📱" },
   ];
 
-  const defaultCode = {
+  const defaultCode: Record<Language, string> = {
     python:
       '# Write your Python code here\n\ndef main():\n    print("Hello, World!")\n\nif __name__ == "__main__":\n    main()',
     cpp: '// Write your C++ code here\n#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}',
@@ -293,17 +339,22 @@ const CodeEditor = () => {
                         savedSnippets.map((snippet) => (
                           <Card
                             key={snippet.id}
-                            className="cursor-pointer hover:bg-accent/50"
-                            onClick={() => loadSnippet(snippet)}
+                            className="relative cursor-pointer hover:bg-accent/50 p-4" // Adjust padding for readability
+                            onClick={() => loadSnippet(snippet)} // Click card to load snippet
                           >
-                            <CardHeader className="p-4">
+                            <CardHeader className="p-0">
+                              {" "}
+                              {/* Remove default padding */}
                               <div className="flex items-start justify-between">
                                 <div>
-                                  <CardTitle className="text-base">
+                                  <CardTitle className="text-lg font-semibold">
+                                    {" "}
+                                    {/* Increase font size */}
                                     {snippet.title}
                                   </CardTitle>
-                                  <CardDescription className="text-sm">
-                                    {snippet.description}
+                                  <CardDescription className="text-sm text-muted-foreground mt-1">
+                                    {snippet.description ||
+                                      "No description provided"}
                                   </CardDescription>
                                 </div>
                                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -326,6 +377,19 @@ const CodeEditor = () => {
                                 ).toLocaleDateString()}
                               </div>
                             </CardHeader>
+
+                            {/* Delete button*/}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent card click action
+                                handleDeleteSnippet(snippet.id); // Call the delete function directly
+                              }}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
                           </Card>
                         ))
                       )}
