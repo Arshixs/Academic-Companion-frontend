@@ -1,6 +1,11 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { Dashboard } from "./components/pages/dashboard";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import AssignmentPage from "./components/pages/assignment";
 import AttendancePage from "./components/pages/attendance";
 import { LoginForm } from "./components/pages/login";
@@ -43,15 +48,17 @@ function App() {
               />
               <Route
                 path="/home"
-                element={<PrivateRoute element={LandingPage} />}
+                element={<LandingPage />}
               />
               <Route
                 path="/code"
-                element={<PrivateRoute element={CodeEditor} />}
+                element={<CodeEditor />}
               />
 
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
+              {/* Redirect any other routes to /home */}
+              <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
           </AuthProvider>
         </Router>
