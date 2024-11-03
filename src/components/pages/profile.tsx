@@ -43,6 +43,9 @@ import {
 import { useForm } from "react-hook-form";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import Cookies from "js-cookie";
+import AssignmentsCard from "./dashboard/assignmnet_table";
+import { AddCourseDialog } from "./attendance/add_course";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface UserProfile {
   username: string;
@@ -61,17 +64,24 @@ interface Course {
 }
 
 export function ProfilePage() {
+  const user = Cookies.get("user")
+    ? JSON.parse(Cookies.get("user") as string)
+    : null;
+
+  console.log(user?.username); // Optional chaining to avoid errors if user is null
+
   const [profile, setProfile] = useState<UserProfile>({
-    username: "",
-    email: "",
-    first_name: "",
-    last_name: "",
-    branch: "",
-    current_semester: 1,
-    college: "",
+    username: user?.username || "",
+    email: user?.email || "",
+    first_name: user?.first_name || "",
+    last_name: user?.last_name || "",
+    branch: user?.branch || "",
+    current_semester: user?.current_semester || 0,
+    college: user?.college || "",
   });
-  const user = Cookies.get("user");
-  setProfile(user);
+
+  console.log(profile);
+  //   setProfile(user);
   const [courses, setCourses] = useState<Course[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -87,41 +97,42 @@ export function ProfilePage() {
 
   const accessToken = Cookies.get("access_token");
 
-  useEffect(() => {
-    // Fetch user profile
-    if (accessToken) {
-      
+  //   useEffect(() => {
+  //     // Fetch user profile
+  //     if (accessToken) {
+  //       // Fetch enrolled courses
+  //       fetch("http://127.0.0.1:8000/api/courses/enrolled/", {
+  //         headers: {
+  //           Authorization: `Bearer ${accessToken}`,
+  //         },
+  //       })
+  //         .then((res) => res.json())
+  //         .then((data) => setCourses(data));
 
-      // Fetch enrolled courses
-      fetch("http://127.0.0.1:8000/api/courses/enrolled/", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setCourses(data));
-
-      // Fetch available courses
-      fetch("http://127.0.0.1:8000/courses/available/", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setAvailableCourses(data));
-    }
-  }, [accessToken]);
+  //       // Fetch available courses
+  //       fetch("http://127.0.0.1:8000/courses/available/", {
+  //         headers: {
+  //           Authorization: `Bearer ${accessToken}`,
+  //         },
+  //       })
+  //         .then((res) => res.json())
+  //         .then((data) => setAvailableCourses(data));
+  //     }
+  //   }, [accessToken]);
 
   const onSubmit = async (data: any) => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/profile/update/", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/profile/update/",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(data),
+        }
+      );
 
       if (response.ok) {
         const updatedProfile = await response.json();
@@ -137,14 +148,17 @@ export function ProfilePage() {
     if (!selectedCourse) return;
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/courses/enroll/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ course_id: selectedCourse }),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/courses/enroll/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ course_id: selectedCourse }),
+        }
+      );
 
       if (response.ok) {
         const updatedCourses = await response.json();
@@ -158,12 +172,15 @@ export function ProfilePage() {
 
   const handleDeleteCourse = async (courseId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/courses/unenroll/${courseId}/`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/courses/unenroll/${courseId}/`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       if (response.ok) {
         setCourses(courses.filter((course) => course.id !== courseId));
@@ -197,7 +214,10 @@ export function ProfilePage() {
             <CardContent>
               {isEditing ? (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                  >
                     <FormField
                       control={form.control}
                       name="branch"
@@ -223,7 +243,9 @@ export function ProfilePage() {
                               min={1}
                               max={8}
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value))
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -250,7 +272,9 @@ export function ProfilePage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Username</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        Username
+                      </p>
                       <p>{profile.username}</p>
                     </div>
                     <div>
@@ -258,23 +282,33 @@ export function ProfilePage() {
                       <p>{profile.email}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">First Name</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        First Name
+                      </p>
                       <p>{profile.first_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Last Name</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        Last Name
+                      </p>
                       <p>{profile.last_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Branch</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        Branch
+                      </p>
                       <p>{profile.branch}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Current Semester</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        Current Semester
+                      </p>
                       <p>{profile.current_semester}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">College</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        College
+                      </p>
                       <p>{profile.college}</p>
                     </div>
                   </div>
@@ -288,39 +322,11 @@ export function ProfilePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Enrolled Courses</CardTitle>
-                  <CardDescription>Manage your course enrollments</CardDescription>
+                  <CardDescription>
+                    Manage your course enrollments
+                  </CardDescription>
                 </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button size="icon">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Course</DialogTitle>
-                      <DialogDescription>
-                        Select a course to enroll in
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Select
-                      value={selectedCourse}
-                      onValueChange={setSelectedCourse}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a course" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableCourses.map((course) => (
-                          <SelectItem key={course.id} value={course.id}>
-                            {course.code} - {course.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={handleAddCourse}>Add Course</Button>
-                  </DialogContent>
-                </Dialog>
+                <AddCourseDialog />
               </div>
             </CardHeader>
             <CardContent>

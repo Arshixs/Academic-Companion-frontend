@@ -19,6 +19,7 @@ import {
   Lock,
   Menu,
   X,
+  Notebook,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ModeToggle } from "../mode-toggle";
@@ -35,22 +36,22 @@ const LandingPage = () => {
         "Never miss a deadline with our intuitive assignment tracking system",
     },
     {
-      icon: Calendar,
+      icon: Notebook,
       title: "Attendance Manager",
       description:
-        "Track and manage your class attendance with automated notifications",
+        "Track and manage your class attendance",
     },
     {
-      icon: LineChart,
+      icon: Calendar,
       title: "Calendar",
       description:
         "Track and manage your events with build in Calnedar",
     },
     {
       icon: BookOpen,
-      title: "Course Materials",
+      title: "Notes",
       description:
-        "Access all your study materials in one organized, searchable place",
+        "Create and Access all your notes in one organized, searchable place",
     },
   ];
 

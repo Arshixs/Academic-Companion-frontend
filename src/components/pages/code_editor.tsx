@@ -7,6 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FaPython, FaJsSquare, FaCuttlefish, FaCode } from "react-icons/fa"; // FaCuttlefish for C, FaCode as a general icon for C++
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +50,7 @@ import {
   FolderOpen,
   Star,
   Clock,
-  Trash
+  Trash,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Header from "../header";
@@ -78,12 +80,11 @@ const CodeEditor = () => {
   const [snippetDescription, setSnippetDescription] = useState<string>("");
   const [isPublic, setIsPublic] = useState<boolean>(false);
   const [savedSnippets, setSavedSnippets] = useState<Array<Snippet>>([]);
-  const [isSavedSnippetsLoading, setIsSavedSnippetsLoading] =useState<boolean>(false);
+  const [isSavedSnippetsLoading, setIsSavedSnippetsLoading] =
+    useState<boolean>(false);
 
   const { theme } = useTheme();
   const accessToken = Cookies.get("access_token");
-
-
 
   // Fetch saved snippets
   const fetchSavedSnippets = async (): Promise<void> => {
@@ -111,7 +112,6 @@ const CodeEditor = () => {
       setIsSavedSnippetsLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchSavedSnippets();
@@ -169,7 +169,7 @@ const CodeEditor = () => {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
@@ -186,19 +186,16 @@ const CodeEditor = () => {
     }
   };
 
-
-
-  const loadSnippet = (snippet:Snippet): void => {
+  const loadSnippet = (snippet: Snippet): void => {
     setLanguage(snippet.language);
     setCode(snippet.code);
     setActiveTab("editor");
   };
-
   const languageOptions = [
-    { value: "python", label: "Python", icon: "🐍" },
-    { value: "cpp", label: "C++", icon: "⚡" },
-    { value: "c", label: "C", icon: "🔧" },
-    { value: "javascript", label: "JavaScript", icon: "📱" },
+    { value: "python", label: "Python", icon: <FaPython /> },
+    { value: "cpp", label: "C++", icon: <FaCode /> }, // Generic icon for C++
+    { value: "c", label: "C", icon: <FaCuttlefish /> }, // FaCuttlefish as a stand-in for C
+    { value: "javascript", label: "JavaScript", icon: <FaJsSquare /> },
   ];
 
   const defaultCode: Record<Language, string> = {
@@ -231,7 +228,7 @@ const CodeEditor = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           language,
@@ -290,10 +287,8 @@ const CodeEditor = () => {
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
               <div>
-                <CardTitle className="text-2xl">Online Code Editor</CardTitle>
-                <CardDescription>
-                  Write, compile, and run code in your browser
-                </CardDescription>
+                <CardTitle className="text-2xl">Code Editor</CardTitle>
+
               </div>
               <div className="flex items-center gap-2">
                 <Select value={language} onValueChange={setLanguage}>
@@ -361,13 +356,7 @@ const CodeEditor = () => {
                                   {snippet.is_public && (
                                     <Star className="h-4 w-4" />
                                   )}
-                                  <span className="text-xs">
-                                    {
-                                      languageOptions.find(
-                                        (l) => l.value === snippet.language
-                                      )?.icon
-                                    }
-                                  </span>
+                                
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">

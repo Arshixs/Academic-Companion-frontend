@@ -18,8 +18,8 @@ import Cookies from "js-cookie";
 import { access } from "fs";
 
 interface AddCourseDialogProp {
-  fetchAttendanceCardData: () => Promise<void>;
-  fetchDetailedAttendance: () => Promise<void>;
+  fetchAttendanceCardData?: () => Promise<void>;
+  fetchDetailedAttendance?: () => Promise<void>;
 }
 
 export function AddCourseDialog({
