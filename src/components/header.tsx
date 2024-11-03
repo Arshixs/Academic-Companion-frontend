@@ -27,7 +27,7 @@ export const Header = () => {
     setSelected(path);
   }, [location]);
 
-  const handleNavClick = (path:string) => {
+  const handleNavClick = (path: string) => {
     setSelected(path);
     navigate(`/${path === "dashboard" ? "" : path}`);
   };
@@ -46,12 +46,14 @@ export const Header = () => {
     { path: "calendar", label: "Calendar" },
     { path: "code", label: "Code Editor" },
   ];
-
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-lg px-4 md:px-6">
       {/* Logo - Always on the left */}
       <Link
-        href={access?"/dashboard":"/home"}
+        href={access ? "/dashboard" : "/home"}
         className="flex items-center gap-2 text-lg font-semibold md:text-base"
       >
         <div className="flex items-center">
@@ -128,8 +130,9 @@ export const Header = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfileClick}>
+              Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>

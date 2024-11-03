@@ -58,8 +58,12 @@ export function AddCourseDialog({
       }
 
       const data = await response.json();
-      fetchAttendanceCardData();
-      fetchDetailedAttendance();
+      if (fetchAttendanceCardData) {
+        fetchAttendanceCardData();
+      }
+      if (fetchDetailedAttendance) {
+        fetchDetailedAttendance();
+      }
 
       toast({
         title: "Success",

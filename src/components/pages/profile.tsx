@@ -17,14 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormField,
@@ -33,19 +25,12 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import Cookies from "js-cookie";
-import AssignmentsCard from "./dashboard/assignmnet_table";
 import { AddCourseDialog } from "./attendance/add_course";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 interface UserProfile {
   username: string;
@@ -58,17 +43,18 @@ interface UserProfile {
 }
 
 interface Course {
-  id: string;
-  name: string;
-  code: string;
+  id: number;
+  course_id: string;
+  course_name: string;
+  college_name: string;
+  created_at: string;
 }
 
 export function ProfilePage() {
+  const { toast } = useToast();
   const user = Cookies.get("user")
     ? JSON.parse(Cookies.get("user") as string)
     : null;
-
-  console.log(user?.username); // Optional chaining to avoid errors if user is null
 
   const [profile, setProfile] = useState<UserProfile>({
     username: user?.username || "",
@@ -80,119 +66,159 @@ export function ProfilePage() {
     college: user?.college || "",
   });
 
-  console.log(profile);
-  //   setProfile(user);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState("");
 
   const form = useForm({
     defaultValues: {
-      branch: "",
-      current_semester: 1,
-      college: "",
+      branch: profile.branch,
+      current_semester: profile.current_semester,
+      college: profile.college,
     },
   });
 
   const accessToken = Cookies.get("access_token");
 
-  //   useEffect(() => {
-  //     // Fetch user profile
-  //     if (accessToken) {
-  //       // Fetch enrolled courses
-  //       fetch("http://127.0.0.1:8000/api/courses/enrolled/", {
-  //         headers: {
-  //           Authorization: `Bearer ${accessToken}`,
-  //         },
-  //       })
-  //         .then((res) => res.json())
-  //         .then((data) => setCourses(data));
-
-  //       // Fetch available courses
-  //       fetch("http://127.0.0.1:8000/courses/available/", {
-  //         headers: {
-  //           Authorization: `Bearer ${accessToken}`,
-  //         },
-  //       })
-  //         .then((res) => res.json())
-  //         .then((data) => setAvailableCourses(data));
-  //     }
-  //   }, [accessToken]);
-
-  const onSubmit = async (data: any) => {
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/profile/update/",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify(data),
+  const fetchCourses = async () => {
+    if (accessToken) {
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      myHeaders.append("Authorization", `Bearer ${accessToken}`);
+      try {
+        const response = await fetch("http://127.0.0.1:8000/users/courses/", {
+          method: "GET",
+          headers: myHeaders,
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch courses");
         }
-      );
-
-      if (response.ok) {
-        const updatedProfile = await response.json();
-        setProfile(updatedProfile);
-        setIsEditing(false);
+        const data = await response.json();
+        setCourses(data);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch courses. Please try again.",
+        });
+        console.error("Error fetching courses:", error);
       }
-    } catch (error) {
-      console.error("Error updating profile:", error);
     }
   };
 
-  const handleAddCourse = async () => {
-    if (!selectedCourse) return;
-
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/courses/enroll/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ course_id: selectedCourse }),
-        }
-      );
-
-      if (response.ok) {
-        const updatedCourses = await response.json();
-        setCourses(updatedCourses);
-        setSelectedCourse("");
-      }
-    } catch (error) {
-      console.error("Error enrolling in course:", error);
-    }
-  };
+  useEffect(() => {
+    fetchCourses();
+  }, [accessToken]);
 
   const handleDeleteCourse = async (courseId: string) => {
+    if (!accessToken) return;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Authorization", `Bearer ${accessToken}`);
+
     try {
+      console.log(courseId);
       const response = await fetch(
-        `http://127.0.0.1:8000/api/courses/unenroll/${courseId}/`,
+        `http://127.0.0.1:8000/users/delete/${courseId}/`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: myHeaders,
         }
       );
 
-      if (response.ok) {
-        setCourses(courses.filter((course) => course.id !== courseId));
+      if (!response.ok) {
+        throw new Error("Failed to delete course");
       }
+
+      toast({
+        title: "Success",
+        description: "Course deleted successfully",
+      });
+
+      // Refresh the courses list
+      fetchCourses();
     } catch (error) {
-      console.error("Error unenrolling from course:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete course. Please try again.",
+      });
+      console.error("Error deleting course:", error);
+    }
+  };
+
+  // Update the onSubmit function in your ProfilePage component
+  const onSubmit = async (data: any) => {
+    if (!accessToken) return;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Authorization", `Bearer ${accessToken}`);
+
+    // Only include fields that have changed
+    const updatedData: any = {};
+    if (data.branch !== profile.branch) updatedData.branch = data.branch;
+    if (data.current_semester !== profile.current_semester)
+      updatedData.current_semester = data.current_semester;
+    if (data.college !== profile.college) {
+      updatedData.college_name = data.college;
+      updatedData.college_location = data.college_location;
+    }
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/users/profile/patch/",
+        {
+          method: "PATCH",
+          headers: myHeaders,
+          body: JSON.stringify(updatedData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const updatedProfile = await response.json();
+      setProfile(updatedProfile);
+
+      setIsEditing(false);
+      const currentUser = Cookies.get("user")
+        ? JSON.parse(Cookies.get("user") as string)
+        : null;
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          branch: updatedProfile.branch,
+          current_semester: updatedProfile.current_semester,
+          college: updatedProfile.college,
+        };
+
+        // Set the updated user cookie
+        Cookies.set("user", JSON.stringify(updatedUser), {
+          expires: 7, // or whatever expiration you're using
+          path: "/", // or your specific path
+        });
+      }
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+      });
+      console.error("Error updating profile:", error);
     }
   };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
+      <Toaster />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           <Card className="lg:col-span-4">
@@ -265,6 +291,22 @@ export function ProfilePage() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="college_location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>College Location</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Required if entering a new college"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <Button type="submit">Save Changes</Button>
                   </form>
                 </Form>
@@ -326,7 +368,7 @@ export function ProfilePage() {
                     Manage your course enrollments
                   </CardDescription>
                 </div>
-                <AddCourseDialog />
+                <AddCourseDialog fetchAttendanceCardData={fetchCourses} />
               </div>
             </CardHeader>
             <CardContent>
@@ -341,13 +383,13 @@ export function ProfilePage() {
                 <TableBody>
                   {courses.map((course) => (
                     <TableRow key={course.id}>
-                      <TableCell>{course.code}</TableCell>
-                      <TableCell>{course.name}</TableCell>
+                      <TableCell>{course.course_id}</TableCell>
+                      <TableCell>{course.course_name}</TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteCourse(course.id)}
+                          onClick={() => handleDeleteCourse(course.course_id)}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
