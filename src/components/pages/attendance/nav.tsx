@@ -1,74 +1,68 @@
-"use client"
-
-import Link from "next/link"
-import { LucideIcon } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "../../ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../../ui/tooltip"
+import React from "react";
+import Link from "next/link";
+import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "../../ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
+import {AddCourseDialog} from "./add_course";
 
 interface NavProps {
-  isCollapsed: boolean
-  setSelected: React.Dispatch<React.SetStateAction<string | undefined>> // Updated to React.Dispatch
+  isCollapsed: boolean;
+  setSelected: React.Dispatch<React.SetStateAction<string | undefined>>;
   links: {
-    title: string
-    label?: string
-    icon: LucideIcon
-    variant: "default" | "ghost"
-  }[]
+    title: string;
+    label?: string;
+    icon: LucideIcon;
+    variant: "default" | "ghost";
+  }[];
+  fetchAttendanceCardData : () => Promise<void>;
+  fetchDetailedAttendance : () => Promise<void>;
 }
 
-export function Nav({ links, isCollapsed, setSelected }: NavProps) {
-  
-  // Function to handle clicking on a link
+export function Nav({ links, isCollapsed, setSelected, fetchAttendanceCardData, fetchDetailedAttendance }: NavProps) {
   const handleClick = (title: string) => {
-    setSelected(title); // Set the selected title
-    console.log(`helloworld ${title}`)
+    setSelected(title);
+    console.log(`helloworld ${title}`);
   };
-  console.log(`hello: ${links}`);
+  console.log("links", links);
 
   return (
     <div
       data-collapsed={isCollapsed}
       className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2 border-0"
     >
+      <div className="flex items-center justify-between px-2">
+        <span
+          className={cn(
+            "text-sm font-semibold",
+            isCollapsed ? "hidden" : "block"
+          )}
+        >
+          Courses
+        </span>
+        {isCollapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <AddCourseDialog />
+            </TooltipTrigger>
+            <TooltipContent side="right">Add Course</TooltipContent>
+          </Tooltip>
+        ) : (
+          <AddCourseDialog fetchAttendanceCardData={fetchAttendanceCardData} fetchDetailedAttendance={fetchDetailedAttendance} />
+        )}
+      </div>
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        {links.map((link, index) =>
-          isCollapsed ? (
+        {links.map((link, index) => {
+          console.log("Link Title:", link.title); // Add this line for debugging
+          return isCollapsed ? (
             <Tooltip key={index} delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Link
-                  href="#"
-                  onClick={() => handleClick(link.title)} // Handle click event
-                  className={cn(
-                    buttonVariants({ variant: link.variant, size: "icon" }),
-                    "h-9 w-9",
-                    link.variant === "default" &&
-                      "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-                  )}
-                >
-                  <link.icon className="h-4 w-4" />
-                  <span className="sr-only">{link.title}</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="flex items-center gap-4">
-                {link.title}
-                {link.label && (
-                  <span className="ml-auto text-muted-foreground">
-                    {link.label}
-                  </span>
-                )}
-              </TooltipContent>
+              {/* The rest of your code */}
             </Tooltip>
           ) : (
             <Link
               key={index}
               href="#"
-              onClick={() => handleClick(link.title)} // Handle click event
+              onClick={() => handleClick(link.title)}
               className={cn(
                 buttonVariants({ variant: link.variant, size: "sm" }),
                 link.variant === "default" &&
@@ -77,21 +71,11 @@ export function Nav({ links, isCollapsed, setSelected }: NavProps) {
               )}
             >
               <link.icon className="mr-2 h-4 w-4" />
-              {link.label && (
-                <span
-                  className={cn(
-                    "ml-auto",
-                    link.variant === "default" &&
-                      "text-background dark:text-white"
-                  )}
-                >
-                  {link.title}
-                </span>
-              )}
+              <span>{link.title}</span> {/* Ensure link.title is displayed */}
             </Link>
-          )
-        )}
+          );
+        })}
       </nav>
     </div>
-  )
+  );
 }

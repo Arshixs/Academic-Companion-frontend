@@ -15,8 +15,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
-// Define TypeScript interfaces for attendance data
 interface AttendanceRecord {
   [date: string]: string;
 }
@@ -27,6 +28,7 @@ interface AttendanceData {
 const defaultCollapsed = false;
 
 const AttendancePage = () => {
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
     new Date()
   );
@@ -39,86 +41,100 @@ const AttendancePage = () => {
   const [status, setStatus] = useState<string>("NOT SET");
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
-  const user = JSON.parse(Cookies.get("user") || "{}"); // Retrieve user data from cookies
-  const accessToken = Cookies.get("access_token"); // Retrieve access token from cookies
+  const user = JSON.parse(Cookies.get("user") || "{}");
+  const accessToken = Cookies.get("access_token");
 
   const capitalizeFirstLetter = (string: string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
-  useEffect(() => {
+  const fetchAttendanceCardData = async () => {
     if (accessToken) {
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       myHeaders.append("Authorization", `Bearer ${accessToken}`);
-      const requestOptions = {
-        method: "GET",
-        headers: myHeaders,
-      };
-      fetch("http://127.0.0.1:8000/attendance/data/", requestOptions)
-        .then((response) => response.json())
-        .then((data) => {
-          // console.log("Attendance Data:", data);
-          setAttendanceCardData(data); // Update the state with fetched data
-        })
-        .catch((error) => console.error("Error fetching attendance:", error));
+      try {
+        const response = await fetch("http://127.0.0.1:8000/attendance/data/", {
+          method: "GET",
+          headers: myHeaders,
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch attendance data");
+        }
+        const data = await response.json();
+        setAttendanceCardData(data);
+        
+        if (selected) {
+          const updatedCourse = data.find((item: DashChartData) => item.course_id === selected);
+          setCourseSelected(updatedCourse);
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch attendance data. Please try again.",
+        });
+        console.error("Error fetching attendance card data:", error);
+      }
     }
-  }, [accessToken]);
+  };
 
-  useEffect(() => {
+  const fetchDetailedAttendance = async () => {
     if (user && user.id && accessToken) {
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       myHeaders.append("Authorization", `Bearer ${accessToken}`);
-      const requestOptions = {
-        method: "GET",
-        headers: myHeaders,
-      };
-      fetch("http://127.0.0.1:8000/attendance/detailed/", requestOptions)
-        .then((response) => response.json())
-        .then((data: AttendanceData) => {
-          console.log("Detailed Attendance Data:", data);
-          console.log(data["CSO-101"]);
-          setAttendanceData(data);
-        })
-        .catch((error) =>
-          console.error("Error fetching detailed attendance:", error)
-        );
+      try {
+        const response = await fetch("http://127.0.0.1:8000/attendance/detailed/", {
+          method: "GET",
+          headers: myHeaders,
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch detailed attendance");
+        }
+        const data = await response.json();
+        setAttendanceData(data);
+        console.log(attendanceData);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch detailed attendance. Please try again.",
+        });
+        console.error("Error fetching detailed attendance:", error);
+      }
     }
+  };
+
+  useEffect(() => {
+    fetchAttendanceCardData();
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchDetailedAttendance();
   }, [accessToken, selected]);
 
   useEffect(() => {
-    const selectedCourse = attendanceCardData.reduce((acc, item) => {
-      if (item.course_id === selected) {
-        acc = item; // Assign the matched item to the accumulator
-      }
-      return acc;
-    }, {} as DashChartData);
+    const selectedCourse = attendanceCardData.find(
+      (item) => item.course_id === selected
+    );
     setCourseSelected(selectedCourse);
-    // console.log(selected);
-  }, [selected]);
+  }, [selected, attendanceCardData]);
 
   useEffect(() => {
     if (selectedDate && courseSelected) {
-      console.log(selectedDate);
-      const formattedDate = selectedDate.toLocaleDateString("en-CA"); // Formats as "YYYY-MM-DD"
-      console.log("formattedDate:" + formattedDate);
-      console.log("Selected:" + selected);
-      console.log(
-        "attendanceData:" + attendanceData[selected]?.[`${formattedDate}`]
-      );
+      const formattedDate = selectedDate.toLocaleDateString("en-CA");
       const courseAttendance = attendanceData[selected]?.[formattedDate];
-      console.log("courseAttendance:" + courseAttendance);
       setStatus(
         courseAttendance ? capitalizeFirstLetter(courseAttendance) : "NOT SET"
       );
     }
-  }, [selectedDate, courseSelected, attendanceData, selected,]);
+  }, [selectedDate, courseSelected, attendanceData, selected]);
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string) => {
+
     setStatus(newStatus);
 
-    // Make POST request to submit attendance
     const formattedDate = selectedDate?.toLocaleDateString("en-GB");
     const attendanceData = {
       course_id: selected,
@@ -130,22 +146,38 @@ const AttendancePage = () => {
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append("Authorization", `Bearer ${accessToken}`);
 
-    fetch("http://127.0.0.1:8000/attendance/create/", {
-      method: "POST",
-      headers: myHeaders,
-      body: JSON.stringify(attendanceData),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to submit attendance.");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        // console.log("Attendance submitted:", data);
-        alert("Attendance successfully submitted!");
-      })
-      .catch((error) => console.error("Error submitting attendance:", error));
+    try {
+      const response = await fetch("http://127.0.0.1:8000/attendance/create/", {
+        method: "POST",
+        headers: myHeaders,
+        body: JSON.stringify(attendanceData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit attendance.");
+      }
+
+      await response.json();
+      
+      // Refresh both detailed attendance and attendance card data
+      await Promise.all([
+        fetchDetailedAttendance(),
+        fetchAttendanceCardData()
+      ]);
+
+      toast({
+        title: "Success",
+        description: "Attendance updated successfully!",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Select Course",
+        description: "Please select a Course to update attendance",
+      });
+      console.error("Error submitting attendance:", error);
+    }
   };
 
   const mapAttendanceToLinks = () => {
@@ -155,19 +187,20 @@ const AttendancePage = () => {
       const dates = Object.keys(attendanceData[course]);
       const latestDate = dates[dates.length - 1];
       const latestStatus = attendanceData[course][latestDate];
+      console.log("course name:",course);
       return {
-        title: course, // Course ID as title
-        label: latestStatus || "", // Display the latest attendance status
+        title: course,
+        label: latestStatus || "",
         icon: randomIcon,
         variant: "ghost",
       };
     });
   };
-  // console.log(status);
 
   return (
     <>
       <Header />
+      <Toaster />
       <main className="h-screen gap-4 md:gap-8">
         <div className="flex flex-row h-full">
           <div className="text-center flex-none w-50 border bg-card text-card-foreground shadow-sm">
@@ -176,6 +209,8 @@ const AttendancePage = () => {
               setSelected={setSelected}
               isCollapsed={isCollapsed}
               links={mapAttendanceToLinks()}
+              fetchAttendanceCardData={fetchAttendanceCardData}
+              fetchDetailedAttendance={fetchDetailedAttendance}
             />
           </div>
           <div className="flex-auto w-2/3 flex flex-col">
@@ -233,7 +268,7 @@ const AttendancePage = () => {
                 {courseSelected && selected ? (
                   <AttendanceCard
                     className="border-0 shadow-none"
-                    key={0}
+                    key={courseSelected.course_id}
                     data={courseSelected}
                   />
                 ) : (

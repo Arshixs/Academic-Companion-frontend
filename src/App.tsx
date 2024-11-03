@@ -17,8 +17,11 @@ import { Toaster } from "./components/ui/toaster";
 import Calendar from "./components/pages/calendar";
 import LandingPage from "./components/pages/home";
 import CodeEditor from "./components/pages/code_editor";
+import Cookies from "js-cookie";
 
 function App() {
+  const access = Cookies.get("access_token") || null;
+
   return (
     <>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -46,19 +49,21 @@ function App() {
                 path="/calendar"
                 element={<PrivateRoute element={Calendar} />}
               />
-              <Route
-                path="/home"
-                element={<LandingPage />}
-              />
-              <Route
-                path="/code"
-                element={<CodeEditor />}
-              />
-
+              <Route path="/home" element={<LandingPage />} />
+              <Route path="/code" element={<CodeEditor />} />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />
               {/* Redirect any other routes to /home */}
-              <Route path="*" element={<Navigate to="/home" replace />} />
+              <Route
+                path="*"
+                element={
+                  access ? (
+                    <Navigate to="/dashboard" replace />
+                  ) : (
+                    <Navigate to="/home" replace />
+                  )
+                }
+              />
             </Routes>
           </AuthProvider>
         </Router>
