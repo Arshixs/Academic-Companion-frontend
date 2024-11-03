@@ -18,6 +18,7 @@ import Calendar from "./components/pages/calendar";
 import LandingPage from "./components/pages/home";
 import CodeEditor from "./components/pages/code_editor";
 import Cookies from "js-cookie";
+import ProfilePage from "./components/pages/profile";
 
 function App() {
   const access = Cookies.get("access_token") || null;
@@ -44,6 +45,10 @@ function App() {
               <Route
                 path="/notes"
                 element={<PrivateRoute element={NotesGrid} />}
+              />
+              <Route
+                path="/profile"
+                element={<PrivateRoute element={ProfilePage} />}
               />
               <Route
                 path="/calendar"

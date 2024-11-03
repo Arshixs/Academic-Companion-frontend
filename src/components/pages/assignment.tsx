@@ -65,7 +65,7 @@ export default function AssignmentPage() {
     }
     return {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      "Authorization": `Bearer ${accessToken}`,
     };
   };
 

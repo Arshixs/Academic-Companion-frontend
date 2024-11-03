@@ -20,8 +20,10 @@ import { AttendanceCard } from "./dashboard/pie";
 import { Header } from "../header";
 import { ArrowUpRight } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
-import { UpcomingEvents } from "./dashboard/events";
+import  UpcomingEvents  from "./dashboard/events";
 import Cookies from "js-cookie"; // Import js-cookie for handling cookies
+import { AssignmentData } from "./assignment";
+import AssignmentsCard from "./dashboard/assignmnet_table";
 
 export interface DashChartData {
   course_id: string;
@@ -45,8 +47,18 @@ export interface EventsData {
 }
 
 const events: EventsData[] = [
-  { name: "Tech Innovation Conference", date: new Date("2024-10-15"), description: "A conference showcasing the latest in tech innovations, including AI, blockchain, and more." },
-  { name: "AI Workshop", date: new Date("2024-11-05"), description: "A hands-on workshop focused on AI and machine learning tools and applications." },
+  {
+    name: "Tech Innovation Conference",
+    date: new Date("2024-10-15"),
+    description:
+      "A conference showcasing the latest in tech innovations, including AI, blockchain, and more.",
+  },
+  {
+    name: "AI Workshop",
+    date: new Date("2024-11-05"),
+    description:
+      "A hands-on workshop focused on AI and machine learning tools and applications.",
+  },
   // Other events...
 ];
 
@@ -63,8 +75,43 @@ export function Dashboard() {
   const [attendanceData, setAttendanceData] = useState<DashChartData[]>([]);
   const user = JSON.parse(Cookies.get("user") || "{}"); // Retrieve user data from cookies
   console.log(user);
+  const [assignments, setAssignment] = useState<AssignmentData[]>([]);
   const accessToken = Cookies.get("access_token"); // Retrieve access token from cookies
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
+  const getAuthHeaders = () => {
+    if (!accessToken) {
+      throw new Error("No access token available");
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    };
+  };
+
+  const fetchAssignments = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/assignment/assignments/`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAssignment(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch assignments"
+      );
+      console.error("Error fetching assignments:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
     if (accessToken) {
       const myHeaders = new Headers();
@@ -83,6 +130,7 @@ export function Dashboard() {
           setAttendanceData(data); // Update the state with fetched data
         })
         .catch((error) => console.error("Error fetching attendance:", error));
+      fetchAssignments();
     }
   }, [accessToken]);
 
@@ -116,52 +164,7 @@ export function Dashboard() {
         </Card>
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
           {/* Assignments Card */}
-          <Card className="xl:col-span-2 self-start">
-            <CardHeader className="flex flex-row items-center">
-              <div className="grid gap-2">
-                <CardTitle>Assignments</CardTitle>
-                <CardDescription>
-                  Recent Assignment from your Courses.
-                </CardDescription>
-              </div>
-              <Button asChild size="sm" className="ml-auto gap-1">
-                <Link href="/assignment">
-                  View All
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead className="text-center">Course</TableHead>
-                    <TableHead className="text-center">Due Date</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assignments2.map((assignment, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <div className="font-medium">{assignment.task}</div>
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell text-center">
-                        {assignment.course}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell lg:hidden xl:table-cell text-center">
-                        {new Date(assignment.duedate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="pl-0 hidden xl:table-cell text-center">
-                        <Checkbox id={`status-checkbox-${index}`} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <AssignmentsCard />
 
           {/* Upcoming Events Card */}
           <UpcomingEvents className="self-start" events={events} />
