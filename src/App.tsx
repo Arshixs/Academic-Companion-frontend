@@ -48,7 +48,11 @@ function App() {
               />
               <Route
                 path="/home"
-                element={<PrivateRoute element={LandingPage} />}
+                element={<LandingPage />}
+              />
+              <Route
+                path="/code"
+                element={<CodeEditor />}
               />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignUpForm />} />

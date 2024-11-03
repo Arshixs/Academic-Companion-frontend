@@ -35,7 +35,7 @@ export const Header = () => {
   const handleLogout = () => {
     Cookies.remove("access_token");
     Cookies.remove("user");
-    navigate("/login");
+    navigate("/home");
   };
 
   const navLinks = [
@@ -44,6 +44,7 @@ export const Header = () => {
     { path: "assignment", label: "Assignment" },
     { path: "notes", label: "Notes" },
     { path: "calendar", label: "Calendar" },
+    { path: "code", label: "Code Editor" },
   ];
 
   return (
