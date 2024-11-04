@@ -514,14 +514,6 @@ const CodeEditor = () => {
                           }
                         />
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="public"
-                          checked={isPublic}
-                          onCheckedChange={setIsPublic}
-                        />
-                        <Label htmlFor="public">Make public</Label>
-                      </div>
                     </div>
                     <DialogFooter>
                       <Button
