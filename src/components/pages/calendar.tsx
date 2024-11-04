@@ -422,6 +422,7 @@ const Calendar = () => {
               />
               <Input
                 placeholder="Event Title"
+                autoFocus={true}
                 value={newEvent.title}
                 onChange={(e) =>
                   setNewEvent({ ...newEvent, title: e.target.value })

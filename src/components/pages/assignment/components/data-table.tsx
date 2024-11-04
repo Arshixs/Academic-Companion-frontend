@@ -56,6 +56,7 @@ import {
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
 import { Toast } from "@/components/ui/toast";
+import { Textarea } from "@/components/ui/textarea";
 
 export function DataTable({ data, columns, onUpdateRow, onDataChange }) {
   const navigate = useNavigate();
@@ -351,7 +352,7 @@ export function DataTable({ data, columns, onUpdateRow, onDataChange }) {
                             <label className="block text-sm font-medium mb-1">
                               Title
                             </label>
-                            <textarea
+                            <Textarea
                               value={editedData?.id || ""}
                               onChange={(e) =>
                                 handleFieldChange("id", e.target.value)
@@ -363,7 +364,7 @@ export function DataTable({ data, columns, onUpdateRow, onDataChange }) {
                             <label className="block text-sm font-medium mb-1">
                               Description
                             </label>
-                            <textarea
+                            <Textarea
                               value={editedData?.title || ""}
                               onChange={(e) =>
                                 handleFieldChange("title", e.target.value)
